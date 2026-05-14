@@ -5,7 +5,7 @@ from sqlmodel import Field, SQLModel
 
 
 class BaseModel(SQLModel, table=False):
-    id: uuid.UUID | None = Field(
+    id: uuid.UUID = Field(
         default_factory=uuid.uuid4, unique=True, primary_key=True
     )
     created_at: datetime = Field(

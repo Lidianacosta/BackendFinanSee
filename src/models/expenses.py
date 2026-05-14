@@ -1,7 +1,7 @@
 import uuid
 from datetime import date as date
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from sqlmodel import Field, Relationship
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from src.models.users import User
 
 
-class ExpenseEnum(str, Enum):
+class ExpenseEnum(StrEnum):
     A_PAGAR = "AP"
     PAGA = "P"
 
