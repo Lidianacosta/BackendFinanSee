@@ -42,7 +42,6 @@ class UserService:
         Returns:
             The newly created User model instance.
         """
-        # Verifica se o email já existe
         existing_user = await self.get_user_by_email(user_create.email)
         if existing_user:
             raise HTTPException(

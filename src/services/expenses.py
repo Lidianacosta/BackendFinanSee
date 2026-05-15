@@ -24,13 +24,11 @@ class ExpenseService:
         user_id: uuid.UUID,
         period_service: PeriodService,
     ) -> Expense:
-        """Cria uma despesa e associa às categorias. Automaticamente resolve o período se necessário."""
+        """Create an expense and associate it with categories. Automatically resolves the period if necessary."""
         data = expense_create.model_dump(exclude={"category_ids", "period_id"})
 
-        # Lógica de Automação do Período
         period_id = expense_create.period_id
         if not period_id:
-            # Se não enviou o período, descobrimos pelo vencimento da despesa
             period = await period_service.get_or_create_by_date(
                 user_id, expense_create.due_date
             )
@@ -38,7 +36,6 @@ class ExpenseService:
 
         expense = Expense(**data, user_id=user_id, period_id=period_id)
 
-        # Associa categorias se fornecidas
         if expense_create.category_ids:
             statement = select(Category).where(
                 col(Category.id).in_(expense_create.category_ids),
@@ -50,18 +47,20 @@ class ExpenseService:
         self.session.add(expense)
         await self.session.commit()
         await self.session.refresh(expense)
-        
+
         # Eager load relationships after creation to avoid lazy load errors in response
         return await self.read(expense.id, user_id)
 
     async def read_all(
         self, user_id: uuid.UUID, period_id: uuid.UUID | None = None
     ) -> list[Expense]:
-        """Lista despesas, opcionalmente filtradas por período."""
+        """List expenses, optionally filtered by period."""
         statement = (
             select(Expense)
             .where(col(Expense.user_id) == user_id)
-            .options(selectinload(Expense.categories), selectinload(Expense.period))
+            .options(
+                selectinload(Expense.categories), selectinload(Expense.period)
+            )
         )
         if period_id:
             statement = statement.where(col(Expense.period_id) == period_id)
@@ -71,11 +70,15 @@ class ExpenseService:
         return list(result.all())
 
     async def read(self, expense_id: uuid.UUID, user_id: uuid.UUID) -> Expense:
-        """Busca uma despesa específica."""
+        """Retrieve a specific expense."""
         statement = (
             select(Expense)
-            .where(col(Expense.id) == expense_id, col(Expense.user_id) == user_id)
-            .options(selectinload(Expense.categories), selectinload(Expense.period))
+            .where(
+                col(Expense.id) == expense_id, col(Expense.user_id) == user_id
+            )
+            .options(
+                selectinload(Expense.categories), selectinload(Expense.period)
+            )
         )
         result = await self.session.exec(statement)
         expense = result.first()
@@ -89,13 +92,12 @@ class ExpenseService:
         expense_update: ExpenseUpdate,
         user_id: uuid.UUID,
     ) -> Expense:
-        """Atualiza uma despesa."""
+        """Update an expense."""
         expense = await self.read(expense_id, user_id)
         data = expense_update.model_dump(
             exclude_unset=True, exclude={"category_ids"}
         )
 
-        # Atualiza categorias se fornecidas
         if expense_update.category_ids is not None:
             statement = select(Category).where(
                 col(Category.id).in_(expense_update.category_ids),
@@ -113,7 +115,7 @@ class ExpenseService:
         return await self.read(expense.id, user_id)
 
     async def delete(self, expense_id: uuid.UUID, user_id: uuid.UUID) -> None:
-        """Deleta uma despesa."""
+        """Delete an expense."""
         expense = await self.read(expense_id, user_id)
         await self.session.delete(expense)
         await self.session.commit()

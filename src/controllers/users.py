@@ -12,7 +12,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def create_user(user_data: UserCreate, service: UserServiceDep):
-    """Cria um novo usuário no sistema."""
+    """Create a new user in the system."""
     return await service.create(user_data)
 
 
@@ -20,7 +20,7 @@ async def create_user(user_data: UserCreate, service: UserServiceDep):
 async def read_user_me(
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    """Retorna o perfil do usuário autenticado."""
+    """Retrieve the profile of the authenticated user."""
     return current_user
 
 
@@ -30,7 +30,7 @@ async def update_user_me(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: UserServiceDep,
 ):
-    """Atualiza o perfil do usuário autenticado."""
+    """Update the profile of the authenticated user."""
     return await service.update_me(current_user, user_data)
 
 
@@ -39,5 +39,5 @@ async def delete_user_me(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: UserServiceDep,
 ):
-    """Remove a própria conta do sistema."""
+    """Remove the authenticated user's account from the system."""
     await service.delete(current_user.id)

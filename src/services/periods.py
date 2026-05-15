@@ -22,8 +22,7 @@ class PeriodService:
     async def create(
         self, period_create: PeriodCreate, user_id: uuid.UUID
     ) -> Period:
-        """Cria um novo período (mês) para o usuário."""
-        # Verifica se já existe esse mês para o usuário.
+        """Create a new financial period (month) for the user."""
         statement = select(Period).where(
             col(Period.user_id) == user_id,
             col(Period.month) == period_create.month,
@@ -34,11 +33,9 @@ class PeriodService:
                 status_code=400, detail="Period already exists for this month"
             )
 
-        # Busca a renda atual do usuário para inicializar o período se não for enviada
         user = await self.session.get(User, user_id)
         period_data = period_create.model_dump()
 
-        # Se o total_income for 0 (default), usamos o do cadastro do usuário
         if period_data.get("total_income") == Decimal("0.0") and user:
             period_data["total_income"] = user.income
 
@@ -49,7 +46,7 @@ class PeriodService:
         return period
 
     async def read_all(self, user_id: uuid.UUID) -> list[Period]:
-        """Lista todos os períodos do usuário."""
+        """List all financial periods for the user."""
         statement = (
             select(Period)
             .where(col(Period.user_id) == user_id)
@@ -59,7 +56,7 @@ class PeriodService:
         return list(result.all())
 
     async def read(self, period_id: uuid.UUID, user_id: uuid.UUID) -> Period:
-        """Busca um período específico."""
+        """Retrieve a specific financial period."""
         period = await self.session.get(Period, period_id)
         if not period or period.user_id != user_id:
             raise HTTPException(status_code=404, detail="Period not found")
@@ -68,7 +65,7 @@ class PeriodService:
     async def get_or_create_by_date(
         self, user_id: uuid.UUID, date_val: date
     ) -> Period:
-        """Busca um período pelo mês/ano ou cria um novo se não existir."""
+        """Retrieve a period by month/year or create a new one if it doesn't exist."""
         first_day = date_val.replace(day=1)
         statement = select(Period).where(
             col(Period.user_id) == user_id, col(Period.month) == first_day
@@ -77,7 +74,6 @@ class PeriodService:
         period = result.first()
 
         if not period:
-            # Se não existir, cria usando a lógica de inicialização automática
             return await self.create(PeriodCreate(month=first_day), user_id)
 
         return period
@@ -85,10 +81,9 @@ class PeriodService:
     async def get_summary(
         self, period_id: uuid.UUID, user_id: uuid.UUID
     ) -> PeriodSummary:
-        """Calcula o resumo financeiro do período."""
+        """Calculate the financial summary for the period."""
         period = await self.read(period_id, user_id)
 
-        # Busca todas as despesas do período
         statement = select(Expense).where(col(Expense.period_id) == period_id)
         result = await self.session.exec(statement)
         expenses = result.all()

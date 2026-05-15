@@ -19,7 +19,7 @@ async def create_period(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: PeriodServiceDep,
 ):
-    """Cria um novo período (mês) de controle financeiro."""
+    """Create a new financial period (month) for the user."""
     return await service.create(period_data, current_user.id)
 
 
@@ -28,7 +28,7 @@ async def read_periods(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: PeriodServiceDep,
 ):
-    """Lista todos os períodos cadastrados do usuário."""
+    """List all financial periods for the authenticated user."""
     return await service.read_all(current_user.id)
 
 
@@ -38,7 +38,7 @@ async def read_period(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: PeriodServiceDep,
 ):
-    """Busca detalhes de um período específico."""
+    """Retrieve details of a specific financial period."""
     return await service.read(period_id, current_user.id)
 
 
@@ -48,5 +48,5 @@ async def read_period_summary(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: PeriodServiceDep,
 ):
-    """Retorna o resumo financeiro (Saldo, Despesas Pagas/Pendentes) do período."""
+    """Return the financial summary (Balance, Paid/Pending Expenses) for the period."""
     return await service.get_summary(period_id, current_user.id)

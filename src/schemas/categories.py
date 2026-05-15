@@ -1,6 +1,9 @@
 import uuid
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
 from src.utils.validators import validate_name
+
 
 class CategoryBase(BaseModel):
     name: str = Field(min_length=2, max_length=255)
@@ -13,8 +16,10 @@ class CategoryBase(BaseModel):
             raise ValueError("Name contains invalid characters")
         return v
 
+
 class CategoryCreate(CategoryBase):
     pass
+
 
 class CategoryUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=255)
@@ -26,6 +31,7 @@ class CategoryUpdate(BaseModel):
         if v and not validate_name(v):
             raise ValueError("Name contains invalid characters")
         return v
+
 
 class CategoryRead(CategoryBase):
     id: uuid.UUID

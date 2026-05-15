@@ -17,3 +17,6 @@ test.db
 
 # Agents
 .gemini
+
+# vscode
+.vscode

@@ -19,8 +19,7 @@ class CategoryService:
     async def create(
         self, category_create: CategoryCreate, user_id: uuid.UUID
     ) -> Category:
-        """Cria uma nova categoria para o usuário logado."""
-        # Verifica se já existe uma categoria com este nome para o usuário
+        """Create a new category for the authenticated user."""
         statement = select(Category).where(
             col(Category.user_id) == user_id,
             col(Category.name) == category_create.name,
@@ -36,12 +35,12 @@ class CategoryService:
         self.session.add(category)
         await self.session.commit()
         await self.session.refresh(category)
-        
+
         # Eager load relationships after creation to avoid lazy load errors in response
         return await self.read(category.id, user_id)
 
     async def read_all(self, user_id: uuid.UUID) -> list[Category]:
-        """Lista todas as categorias do usuário logado."""
+        """List all categories for the authenticated user."""
         statement = (
             select(Category)
             .where(col(Category.user_id) == user_id)
@@ -53,10 +52,13 @@ class CategoryService:
     async def read(
         self, category_id: uuid.UUID, user_id: uuid.UUID
     ) -> Category:
-        """Busca uma categoria específica garantindo que pertence ao usuário."""
+        """Retrieve a specific category ensuring it belongs to the user."""
         statement = (
             select(Category)
-            .where(col(Category.id) == category_id, col(Category.user_id) == user_id)
+            .where(
+                col(Category.id) == category_id,
+                col(Category.user_id) == user_id,
+            )
             .options(selectinload(Category.expenses))
         )
         result = await self.session.exec(statement)
@@ -71,7 +73,7 @@ class CategoryService:
         category_update: CategoryUpdate,
         user_id: uuid.UUID,
     ) -> Category:
-        """Atualiza uma categoria do usuário logado."""
+        """Update a category for the authenticated user."""
         category = await self.read(category_id, user_id)
         data = category_update.model_dump(exclude_unset=True)
 
@@ -84,7 +86,7 @@ class CategoryService:
         return await self.read(category.id, user_id)
 
     async def delete(self, category_id: uuid.UUID, user_id: uuid.UUID) -> None:
-        """Deleta uma categoria do usuário logado."""
+        """Delete a category for the authenticated user."""
         category = await self.read(category_id, user_id)
         await self.session.delete(category)
         await self.session.commit()

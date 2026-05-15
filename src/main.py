@@ -22,7 +22,6 @@ app = FastAPI(
 
 API_PREFIX = "/api"
 
-# Registrando os roteadores dos controllers
 app.include_router(auth.router, prefix=API_PREFIX)
 app.include_router(users.router, prefix=API_PREFIX)
 app.include_router(categories.router, prefix=API_PREFIX)

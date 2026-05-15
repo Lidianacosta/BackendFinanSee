@@ -19,7 +19,7 @@ async def create_category(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: CategoryServiceDep,
 ):
-    """Cria uma nova categoria para o usuário autenticado."""
+    """Create a new category for the authenticated user."""
     return await service.create(category_data, current_user.id)
 
 
@@ -28,7 +28,7 @@ async def read_categories(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: CategoryServiceDep,
 ):
-    """Lista todas as categorias do usuário autenticado."""
+    """List all categories for the authenticated user."""
     return await service.read_all(current_user.id)
 
 
@@ -38,7 +38,7 @@ async def read_category(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: CategoryServiceDep,
 ):
-    """Busca os detalhes de uma categoria específica."""
+    """Retrieve details of a specific category."""
     return await service.read(category_id, current_user.id)
 
 
@@ -49,7 +49,7 @@ async def update_category(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: CategoryServiceDep,
 ):
-    """Atualiza uma categoria existente."""
+    """Update an existing category."""
     return await service.update(category_id, category_data, current_user.id)
 
 
@@ -59,5 +59,5 @@ async def delete_category(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: CategoryServiceDep,
 ):
-    """Remove uma categoria do sistema."""
+    """Remove a category from the system."""
     await service.delete(category_id, current_user.id)

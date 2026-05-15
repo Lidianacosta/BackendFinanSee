@@ -12,16 +12,17 @@ from src.utils.security import get_current_active_user
 router = APIRouter(prefix="/expenses", tags=["Expenses"])
 
 
-@router.post("/", response_model=ExpenseRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=ExpenseRead, status_code=status.HTTP_201_CREATED
+)
 async def create_expense(
     expense_data: ExpenseCreate,
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: ExpenseServiceDep,
     period_service: PeriodServiceDep,
 ):
-    """Cria uma nova despesa vinculada ao usuário logado."""
+    """Create a new expense for the authenticated user."""
     return await service.create(expense_data, current_user.id, period_service)
-
 
 
 @router.get("/", response_model=list[ExpenseRead])
@@ -30,7 +31,7 @@ async def read_expenses(
     service: ExpenseServiceDep,
     period_id: uuid.UUID | None = None,
 ):
-    """Lista despesas do usuário logado, com filtro opcional por período."""
+    """List expenses for the authenticated user, with optional period filtering."""
     return await service.read_all(current_user.id, period_id)
 
 
@@ -40,7 +41,7 @@ async def read_expense(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: ExpenseServiceDep,
 ):
-    """Busca detalhes de uma despesa específica."""
+    """Retrieve details of a specific expense."""
     return await service.read(expense_id, current_user.id)
 
 
@@ -51,7 +52,7 @@ async def update_expense(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: ExpenseServiceDep,
 ):
-    """Atualiza dados de uma despesa existente."""
+    """Update an existing expense."""
     return await service.update(expense_id, expense_data, current_user.id)
 
 
@@ -61,5 +62,5 @@ async def delete_expense(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: ExpenseServiceDep,
 ):
-    """Remove uma despesa do sistema."""
+    """Remove an expense from the system."""
     await service.delete(expense_id, current_user.id)

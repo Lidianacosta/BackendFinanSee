@@ -2,17 +2,13 @@ import uuid
 from datetime import date
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field
-
-
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from datetime import date
-import uuid
-from decimal import Decimal
+
 
 class PeriodBase(BaseModel):
     month: date
     total_income: Decimal = Field(default=Decimal("0.0"), ge=0)
+
 
 class PeriodCreate(PeriodBase):
     @field_validator("month", mode="before")
@@ -24,6 +20,7 @@ class PeriodCreate(PeriodBase):
             d = date.fromisoformat(v)
             return d.replace(day=1)
         return v
+
 
 class PeriodRead(PeriodBase):
     id: uuid.UUID
