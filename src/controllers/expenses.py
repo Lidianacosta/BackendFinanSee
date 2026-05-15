@@ -32,20 +32,20 @@ async def read_expenses(
     service: ExpenseServiceDep,
     period_id: Annotated[uuid.UUID | None, Query()] = None,
     search: Annotated[
-        str | None, Query(description="Busca por parte do nome")
+        str | None, Query(description="Search by name")
     ] = None,
     category_ids: Annotated[
         list[uuid.UUID] | None,
-        Query(description="Filtrar por IDs de categorias"),
+        Query(description="Filter by category IDs"),
     ] = None,
     expense_status: Annotated[
         ExpenseEnum | None,
-        Query(alias="status", description="Filtrar por status"),
+        Query(alias="status", description="Filter by status"),
     ] = None,
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
 ):
-    """Lista despesas com suporte a filtros avançados e paginação."""
+    """List expenses with advanced filtering and pagination."""
     return await service.read_all(
         user_id=current_user.id,
         period_id=period_id,

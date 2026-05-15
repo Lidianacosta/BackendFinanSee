@@ -38,7 +38,7 @@ async def read_current_period(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: PeriodServiceDep,
 ):
-    """Retorna o período do mês atual (cria um se não existir)."""
+    """Retrieve the current financial period (auto-creates if missing)."""
     return await service.get_or_create_by_date(current_user.id, date.today())
 
 
