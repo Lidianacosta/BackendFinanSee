@@ -28,7 +28,7 @@ class CategoryService:
         if result.first():
             raise HTTPException(
                 status_code=400,
-                detail="Category with this name already exists",
+                detail="Já existe uma categoria com este nome",
             )
 
         category = Category(**category_create.model_dump(), user_id=user_id)
@@ -36,7 +36,6 @@ class CategoryService:
         await self.session.commit()
         await self.session.refresh(category)
 
-        # Eager load relationships after creation to avoid lazy load errors in response
         return await self.read(category.id, user_id)
 
     async def read_all(self, user_id: uuid.UUID) -> list[Category]:
@@ -64,7 +63,10 @@ class CategoryService:
         result = await self.session.exec(statement)
         category = result.first()
         if not category:
-            raise HTTPException(status_code=404, detail="Category not found")
+            raise HTTPException(
+                status_code=404,
+                detail="Categoria não encontrada",
+            )
         return category
 
     async def update(

@@ -30,7 +30,7 @@ class PeriodService:
         result = await self.session.exec(statement)
         if result.first():
             raise HTTPException(
-                status_code=400, detail="Period already exists for this month"
+                status_code=400, detail="Já existe um período para este mês"
             )
 
         user = await self.session.get(User, user_id)
@@ -59,7 +59,10 @@ class PeriodService:
         """Retrieve a specific financial period."""
         period = await self.session.get(Period, period_id)
         if not period or period.user_id != user_id:
-            raise HTTPException(status_code=404, detail="Period not found")
+            raise HTTPException(
+                status_code=404,
+                detail="Período não encontrado",
+            )
         return period
 
     async def get_or_create_by_date(
@@ -89,11 +92,11 @@ class PeriodService:
         expenses = result.all()
 
         total_paid = sum(
-            (e.value for e in expenses if e.status == ExpenseEnum.PAGA),
+            (e.value or Decimal("0.0") for e in expenses if e.status == ExpenseEnum.PAID),
             Decimal("0.0"),
         )
         total_pending = sum(
-            (e.value for e in expenses if e.status == ExpenseEnum.A_PAGAR),
+            (e.value or Decimal("0.0") for e in expenses if e.status == ExpenseEnum.PENDING),
             Decimal("0.0"),
         )
 

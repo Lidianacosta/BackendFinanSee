@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
 from src.models.categories import Category
-from src.models.expenses import Expense
+from src.models.expenses import Expense, ExpenseEnum
 from src.schemas.expenses import ExpenseCreate, ExpenseUpdate
 from src.services.periods import PeriodService
 from src.utils.database import AsyncSessionDep
@@ -48,13 +48,19 @@ class ExpenseService:
         await self.session.commit()
         await self.session.refresh(expense)
 
-        # Eager load relationships after creation to avoid lazy load errors in response
         return await self.read(expense.id, user_id)
 
     async def read_all(
-        self, user_id: uuid.UUID, period_id: uuid.UUID | None = None
+        self,
+        user_id: uuid.UUID,
+        period_id: uuid.UUID | None = None,
+        search: str | None = None,
+        category_ids: list[uuid.UUID] | None = None,
+        status: ExpenseEnum | None = None,
+        offset: int = 0,
+        limit: int = 100,
     ) -> list[Expense]:
-        """List expenses, optionally filtered by period."""
+        """List expenses with advanced filtering and pagination."""
         statement = (
             select(Expense)
             .where(col(Expense.user_id) == user_id)
@@ -62,10 +68,26 @@ class ExpenseService:
                 selectinload(Expense.categories), selectinload(Expense.period)
             )
         )
+
         if period_id:
             statement = statement.where(col(Expense.period_id) == period_id)
 
-        statement = statement.order_by(col(Expense.due_date).desc())
+        if search:
+            statement = statement.where(col(Expense.name).ilike(f"%{search}%"))
+
+        if status:
+            statement = statement.where(col(Expense.status) == status)
+
+        if category_ids:
+            statement = statement.where(
+                Expense.categories.any(Category.id.in_(category_ids))
+            )
+
+        statement = (
+            statement.order_by(col(Expense.due_date).desc())
+            .offset(offset)
+            .limit(limit)
+        )
         result = await self.session.exec(statement)
         return list(result.all())
 
@@ -83,7 +105,9 @@ class ExpenseService:
         result = await self.session.exec(statement)
         expense = result.first()
         if not expense:
-            raise HTTPException(status_code=404, detail="Expense not found")
+            raise HTTPException(
+                status_code=404, detail="Despesa não encontrada"
+            )
         return expense
 
     async def update(

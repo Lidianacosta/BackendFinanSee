@@ -17,9 +17,7 @@ async def test_create_category_success(client: AsyncClient, access_token: str):
     assert "id" in data
 
 
-async def test_create_category_duplicate_name_fails(
-    client: AsyncClient, access_token: str
-):
+async def test_create_category_duplicate_name_fails(client: AsyncClient, access_token: str):
     headers = {"Authorization": f"Bearer {access_token}"}
     payload = {"name": "Lazer"}
     await client.post(categories_url, json=payload, headers=headers)
@@ -27,7 +25,8 @@ async def test_create_category_duplicate_name_fails(
     # Tenta criar de novo com o mesmo nome
     response = await client.post(categories_url, json=payload, headers=headers)
     assert response.status_code == codes.BAD_REQUEST
-    assert "already exists" in response.json()["detail"]
+    assert "Já existe uma categoria com este nome" in response.json()["detail"]
+
 
 
 async def test_read_categories(client: AsyncClient, access_token: str):

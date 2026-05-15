@@ -17,20 +17,20 @@ class ExpenseBase(BaseModel):
     description: str | None = Field(default=None, max_length=500)
     is_fixed: bool = False
     payment_method: str | None = Field(default=None, max_length=100)
-    status: ExpenseEnum = ExpenseEnum.A_PAGAR
+    status: ExpenseEnum = ExpenseEnum.PENDING
 
     @field_validator("name")
     @classmethod
     def check_name(cls, v: str) -> str:
         if not validate_name(v):
-            raise ValueError("Name contains invalid characters")
+            raise ValueError("O nome contém caracteres inválidos")
         return v
 
     @field_validator("description")
     @classmethod
     def check_description(cls, v: str | None) -> str | None:
         if v and not validate_description(v):
-            raise ValueError("Description contains invalid characters")
+            raise ValueError("A descrição contém caracteres inválidos")
         return v
 
 
@@ -54,7 +54,7 @@ class ExpenseUpdate(BaseModel):
     @classmethod
     def check_name(cls, v: str | None) -> str | None:
         if v and not validate_name(v):
-            raise ValueError("Name contains invalid characters")
+            raise ValueError("O nome contém caracteres inválidos")
         return v
 
 

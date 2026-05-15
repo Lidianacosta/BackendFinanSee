@@ -31,9 +31,7 @@ class UserService:
         """Create a new user and ensure they don't already exist."""
         existing_user = await self.get_user_by_email(user_create.email)
         if existing_user:
-            raise HTTPException(
-                status_code=400, detail="Email already registered"
-            )
+            raise HTTPException(status_code=400, detail="E-mail já cadastrado")
 
         user_data = user_create.model_dump(
             exclude={"confirm_password", "password"}
@@ -100,7 +98,9 @@ class UserService:
         """Internal helper to retrieve a user by ID."""
         user = await self.session.get(User, user_id)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(
+                status_code=404, detail="Usuário não encontrado"
+            )
         return user
 
 

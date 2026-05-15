@@ -1,5 +1,5 @@
 import uuid
-from datetime import date as date
+from datetime import date as date_datetime
 from decimal import Decimal
 from enum import StrEnum
 from typing import TYPE_CHECKING
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 
 
 class ExpenseEnum(StrEnum):
-    A_PAGAR = "AP"
-    PAGA = "P"
+    PENDING = "PENDING"
+    PAID = "PAID"
 
 
 class Expense(BaseModel, table=True):
@@ -38,17 +38,16 @@ class Expense(BaseModel, table=True):
 
     name: str | None = None
 
-    value: Decimal | None = Field(
-        default=Decimal("0.0"), decimal_places=2, ge=0
+    value: Decimal | None = Field(default=Decimal("0.0"), decimal_places=2)
+
+    due_date: date_datetime | None = Field(
+        default_factory=date_datetime.today, nullable=True
     )
-
-    due_date: date | None = Field(default_factory=date.today, nullable=True)
-
-    payment_date: date | None = None
+    payment_date: date_datetime | None = None
     description: str | None = None
     is_fixed: bool = False
     payment_method: str | None = None
-    status: ExpenseEnum = Field(default=ExpenseEnum.A_PAGAR)
+    status: ExpenseEnum = Field(default=ExpenseEnum.PENDING)
 
     def __str__(self):
         return str(self.name)

@@ -7,7 +7,6 @@ from pydantic import (
     ConfigDict,
     EmailStr,
     Field,
-    ValidationError,
     field_validator,
     model_validator,
 )
@@ -29,21 +28,21 @@ class UserBase(BaseModel):
     @classmethod
     def check_cpf(cls, v: str | None) -> str | None:
         if v and not validate_cpf(v):
-            raise ValueError("Invalid CPF")
+            raise ValueError("CPF inválido")
         return v
 
     @field_validator("phone_number")
     @classmethod
     def check_phone(cls, v: str | None) -> str | None:
         if v and not validate_phone(v):
-            raise ValueError("Invalid phone number")
+            raise ValueError("Número de telefone inválido")
         return v
 
     @field_validator("date_of_birth")
     @classmethod
     def check_age(cls, v: date | None) -> date | None:
         if v and calculate_age(v) < 18:
-            raise ValueError("User must be at least 18 years old")
+            raise ValueError("O usuário deve ter pelo menos 18 anos")
         return v
 
 
@@ -54,7 +53,7 @@ class UserCreate(UserBase):
     @model_validator(mode="after")
     def check_passwords_match(self) -> "UserCreate":
         if self.password != self.confirm_password:
-            raise ValidationError("passwords do not match")
+            raise ValueError("As senhas não coincidem")
         return self
 
 
@@ -73,14 +72,14 @@ class UserUpdate(BaseModel):
     @classmethod
     def check_cpf(cls, v: str | None) -> str | None:
         if v and not validate_cpf(v):
-            raise ValidationError("Invalid CPF")
+            raise ValueError("CPF inválido")
         return v
 
     @field_validator("phone_number")
     @classmethod
     def check_phone(cls, v: str | None) -> str | None:
         if v and not validate_phone(v):
-            raise ValidationError("Invalid phone number")
+            raise ValueError("Número de telefone inválido")
         return v
 
 
