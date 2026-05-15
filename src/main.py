@@ -20,12 +20,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+API_PREFIX = "/api"
+
 # Registrando os roteadores dos controllers
-app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(categories.router)
-app.include_router(periods.router)
-app.include_router(expenses.router)
+app.include_router(auth.router, prefix=API_PREFIX)
+app.include_router(users.router, prefix=API_PREFIX)
+app.include_router(categories.router, prefix=API_PREFIX)
+app.include_router(periods.router, prefix=API_PREFIX)
+app.include_router(expenses.router, prefix=API_PREFIX)
 
 
 @app.get("/", tags=["Root"])

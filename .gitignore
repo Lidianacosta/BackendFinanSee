@@ -12,5 +12,8 @@ wheels/
 .ruff_cache
 db.sqlite
 
+# tests
+test.db
+
 # Agents
 .gemini

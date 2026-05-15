@@ -16,29 +16,29 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "mypy>=2.1.0",
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.3.0",
     "ruff>=0.15.12",
 ]
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+minversion = "9.0"
+addopts = []
+testpaths = ["tests"]
+
 
 [tool.ruff]
-exclude = [
-    ".git",
-    "__pycache__",
-    "build",
-    "dist",
-    ".venv",
-]
+exclude = [".git", "__pycache__", "build", "dist", ".venv"]
 line-length = 79
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "D"]
 
-ignore = [
-    "E501",
-    "D203",
-    "D213",
-]
+ignore = ["E501", "D203", "D213"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "migrations/*" = ["D", "E501"]
