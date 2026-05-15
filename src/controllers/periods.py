@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
@@ -30,6 +31,15 @@ async def read_periods(
 ):
     """List all financial periods for the authenticated user."""
     return await service.read_all(current_user.id)
+
+
+@router.get("/current/", response_model=PeriodRead)
+async def read_current_period(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    service: PeriodServiceDep,
+):
+    """Retorna o período do mês atual (cria um se não existir)."""
+    return await service.get_or_create_by_date(current_user.id, date.today())
 
 
 @router.get("/{period_id}", response_model=PeriodRead)
