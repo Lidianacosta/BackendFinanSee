@@ -1,14 +1,11 @@
-import uuid
-from datetime import date
 from decimal import Decimal
-
+from datetime import date
+import uuid
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-
 from src.models.expenses import ExpenseEnum
+from src.utils.validators import validate_name, validate_description
 from src.schemas.categories import CategoryRead
 from src.schemas.periods import PeriodRead
-from src.utils.validators import validate_description, validate_name
-
 
 class ExpenseBase(BaseModel):
     name: str = Field(min_length=2, max_length=255)
@@ -33,11 +30,9 @@ class ExpenseBase(BaseModel):
             raise ValueError("Description contains invalid characters")
         return v
 
-
 class ExpenseCreate(ExpenseBase):
     period_id: uuid.UUID | None = None
     category_ids: list[uuid.UUID] = []
-
 
 class ExpenseUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=255)
@@ -57,7 +52,6 @@ class ExpenseUpdate(BaseModel):
             raise ValueError("Name contains invalid characters")
         return v
 
-
 class ExpenseRead(ExpenseBase):
     id: uuid.UUID
     user_id: uuid.UUID
@@ -67,8 +61,3 @@ class ExpenseRead(ExpenseBase):
     payment_date: date | None = None
 
     model_config = ConfigDict(from_attributes=True)
-
-
-# Rebuild the model to resolve circular references with CategoryRead
-CategoryRead.model_rebuild()
-ExpenseRead.model_rebuild()

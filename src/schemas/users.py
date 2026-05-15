@@ -7,6 +7,7 @@ from pydantic import (
     ConfigDict,
     EmailStr,
     Field,
+    ValidationError,
     field_validator,
     model_validator,
 )
@@ -53,7 +54,7 @@ class UserCreate(UserBase):
     @model_validator(mode="after")
     def check_passwords_match(self) -> "UserCreate":
         if self.password != self.confirm_password:
-            raise ValueError("passwords do not match")
+            raise ValidationError("passwords do not match")
         return self
 
 
@@ -72,14 +73,14 @@ class UserUpdate(BaseModel):
     @classmethod
     def check_cpf(cls, v: str | None) -> str | None:
         if v and not validate_cpf(v):
-            raise ValueError("Invalid CPF")
+            raise ValidationError("Invalid CPF")
         return v
 
     @field_validator("phone_number")
     @classmethod
     def check_phone(cls, v: str | None) -> str | None:
         if v and not validate_phone(v):
-            raise ValueError("Invalid phone number")
+            raise ValidationError("Invalid phone number")
         return v
 
 

@@ -36,7 +36,9 @@ class CategoryService:
         self.session.add(category)
         await self.session.commit()
         await self.session.refresh(category)
-        return category
+        
+        # Eager load relationships after creation to avoid lazy load errors in response
+        return await self.read(category.id, user_id)
 
     async def read_all(self, user_id: uuid.UUID) -> list[Category]:
         """Lista todas as categorias do usuário logado."""
@@ -54,10 +56,7 @@ class CategoryService:
         """Busca uma categoria específica garantindo que pertence ao usuário."""
         statement = (
             select(Category)
-            .where(
-                col(Category.id) == category_id,
-                col(Category.user_id) == user_id,
-            )
+            .where(col(Category.id) == category_id, col(Category.user_id) == user_id)
             .options(selectinload(Category.expenses))
         )
         result = await self.session.exec(statement)
@@ -82,7 +81,7 @@ class CategoryService:
         self.session.add(category)
         await self.session.commit()
         await self.session.refresh(category)
-        return category
+        return await self.read(category.id, user_id)
 
     async def delete(self, category_id: uuid.UUID, user_id: uuid.UUID) -> None:
         """Deleta uma categoria do usuário logado."""
