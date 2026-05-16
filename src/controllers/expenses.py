@@ -31,9 +31,7 @@ async def read_expenses(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: ExpenseServiceDep,
     period_id: Annotated[uuid.UUID | None, Query()] = None,
-    search: Annotated[
-        str | None, Query(description="Search by name")
-    ] = None,
+    search: Annotated[str | None, Query(description="Search by name")] = None,
     category_ids: Annotated[
         list[uuid.UUID] | None,
         Query(description="Filter by category IDs"),
