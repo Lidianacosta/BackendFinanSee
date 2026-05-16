@@ -2,7 +2,7 @@ import uuid
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 
 from src.models.users import User
 from src.schemas.periods import (
@@ -13,6 +13,7 @@ from src.schemas.periods import (
     PeriodSummary,
 )
 from src.services.periods import PeriodServiceDep
+from src.services.reports import ReportServiceDep
 from src.utils.security import get_current_active_user
 
 router = APIRouter(prefix="/periods", tags=["Periods"])
@@ -86,3 +87,23 @@ async def read_period_analysis(
 ):
     """Return a detailed expense analysis (top category, daily average, 5-day intervals)."""
     return await service.get_expense_analysis(period_id, current_user.id)
+
+
+@router.get("/{period_id}/export", status_code=status.HTTP_200_OK)
+async def export_period_pdf(
+    period_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    service: ReportServiceDep,
+):
+    """Generate and export a professional PDF report for the period."""
+    pdf_bytes = await service.generate_period_pdf(str(period_id), current_user)
+
+    filename = (
+        f"relatorio_{current_user.name.replace(' ', '_')}_{period_id}.pdf"
+    )
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 12px;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+        }
+        .container {
+            padding: 40px;
+        }
+        .header {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .logo {
+            font-size: 28px;
+            color: #34B361;
+            font-weight: bold;
+            float: left;
+        }
+        .report-info {
+            text-align: right;
+        }
+        .report-info h2 {
+            margin: 0;
+            font-size: 22px;
+        }
+        .report-info p {
+            margin: 2px 0;
+            font-size: 14px;
+            color: #555555;
+        }
+        .summary-section {
+            margin-bottom: 30px;
+            width: 100%;
+            display: table;
+            table-layout: fixed;
+            border-spacing: 20px 0;
+        }
+        .summary-card {
+            display: table-cell;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .summary-card h3 {
+            margin: 0 0 5px 0;
+            font-size: 11px;
+            color: #6c757d;
+            text-transform: uppercase;
+        }
+        .summary-card .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #343a40;
+        }
+        .expenses-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .expenses-table th, .expenses-table td {
+            border: 1px solid #dee2e6;
+            padding: 10px 12px;
+            text-align: left;
+        }
+        .expenses-table thead {
+            background-color: #f1f1f1;
+        }
+        .expenses-table th {
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .expenses-table .valor {
+            font-weight: bold;
+            white-space: nowrap;
+            text-align: right;
+        }
+        .status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #ffffff;
+            text-align: center;
+        }
+        .status.PAID {
+            background-color: #34B361;
+        }
+        .status.PENDING {
+            background-color: #EB001B;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            font-size: 10px;
+            color: #6c757d;
+        }
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+    </style>
+    <title>Relatório Mensal - FinanSee</title>
+</head>
+<body>
+    <div class="container">
+        <header class="header clearfix">
+            <div class="logo">FinanSee</div>
+            <div class="report-info">
+                <h2>Relatório Mensal de Despesas</h2>
+                <p><strong>Usuário:</strong> {{ user.name }}</p>
+                <p><strong>Mês de Referência:</strong> {{ period_month }}</p>
+            </div>
+        </header>
+
+        <main>
+            <div class="summary-section">
+                <div class="summary-card">
+                    <h3>Receita Total</h3>
+                    <p class="value">R$ {{ summary.total_income }}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Total Pago</h3>
+                    <p class="value">R$ {{ summary.total_expenses_paid }}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Saldo Restante</h3>
+                    <p class="value">R$ {{ summary.remaining_balance }}</p>
+                </div>
+            </div>
+
+            <table class="expenses-table">
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Vencimento</th>
+                        <th>Categorias</th>
+                        <th>Status</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses %}
+                    <tr>
+                        <td>{{ expense.name }}</td>
+                        <td>{{ expense.due_date.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            {% for cat in expense.categories %}
+                                {{ cat.name }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <span class="status {{ expense.status.name }}">
+                                {{ "PAGO" if expense.status.name == "PAID" else "PENDENTE" }}
+                            </span>
+                        </td>
+                        <td class="valor">R$ {{ expense.value }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 20px; color: #999;">
+                            Nenhuma despesa registrada para este período.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </main>
+
+        <footer class="footer">
+            <p>Gerado em {{ today_str }} | &copy; 2026 FinanSee</p>
+        </footer>
+    </div>
+</body>
+</html>
