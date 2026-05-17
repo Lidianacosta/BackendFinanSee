@@ -3,7 +3,7 @@
 Defines the data structures used for JWT tokens and authentication flow.
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 
 class Token(BaseModel):
@@ -30,3 +30,24 @@ class TokenData(BaseModel):
     """
 
     email: str | None = None
+
+
+class ForgotPasswordIn(BaseModel):
+    """Schema for forgot password request."""
+
+    email: EmailStr
+
+
+class ResetPasswordIn(BaseModel):
+    """Schema for reset password request."""
+
+    token: str
+    new_password: str = Field(min_length=8)
+    confirm_password: str
+
+    @model_validator(mode="after")
+    def check_passwords_match(self) -> "ResetPasswordIn":
+        """Ensure new_password and confirm_password match."""
+        if self.new_password != self.confirm_password:
+            raise ValueError("As senhas não coincidem")
+        return self

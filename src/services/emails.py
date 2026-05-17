@@ -59,5 +59,17 @@ class EmailService:
             background_tasks=background_tasks,
         )
 
+    async def send_password_reset_email(
+        self, email: str, token: str, background_tasks: BackgroundTasks
+    ) -> None:
+        """Sends a password reset email."""
+        await self.send_email(
+            subject="Recuperação de Senha - FinanSee",
+            recipients=[email],
+            template_name="password_reset.html",
+            context={"token": token, "site_name": "FinanSee"},
+            background_tasks=background_tasks,
+        )
+
 
 EmailServiceDep = Annotated[EmailService, Depends(EmailService)]

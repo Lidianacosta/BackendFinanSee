@@ -94,6 +94,18 @@ class UserService:
         result = await self.session.exec(statement)
         return result.first()
 
+    async def reset_password(self, email: str, new_password: str) -> None:
+        """Reset a user's password."""
+        user = await self.get_user_by_email(email)
+        if not user:
+            raise HTTPException(
+                status_code=404, detail="Usuário não encontrado"
+            )
+
+        user.hashed_password = get_password_hash(new_password)
+        self.session.add(user)
+        await self.session.commit()
+
     async def __get_by_id(self, user_id: uuid.UUID) -> User:
         """Internal helper to retrieve a user by ID."""
         user = await self.session.get(User, user_id)

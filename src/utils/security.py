@@ -69,6 +69,28 @@ def create_access_token(
     return encoded_jwt
 
 
+def create_password_reset_token(email: str) -> str:
+    """Generate a short-lived token for password reset (15 minutes)."""
+    expires = datetime.now(UTC) + timedelta(minutes=15)
+    to_encode = {"exp": expires, "sub": email, "type": "password_reset"}
+    return jwt.encode(
+        to_encode, settings.secret_key, algorithm=settings.algorithm
+    )
+
+
+def verify_password_reset_token(token: str) -> str | None:
+    """Verify a password reset token and return the email if valid."""
+    try:
+        payload = jwt.decode(
+            token, settings.secret_key, algorithms=[settings.algorithm]
+        )
+        if payload.get("type") != "password_reset":
+            return None
+        return payload.get("sub")
+    except InvalidTokenError:
+        return None
+
+
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)], user_service: UserServiceDep
 ):
