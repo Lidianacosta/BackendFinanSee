@@ -1,5 +1,6 @@
 """Report service layer for PDF generation."""
 
+import uuid
 from datetime import date
 from pathlib import Path
 from typing import Annotated
@@ -12,13 +13,13 @@ from weasyprint import HTML
 
 from src.models.expenses import Expense
 from src.models.users import User
-from src.services.periods import PeriodService
+from src.services.periods import PeriodServiceDep
 from src.utils.database import AsyncSessionDep
 
 
 class ReportService:
     def __init__(
-        self, session: AsyncSessionDep, period_service: PeriodService
+        self, session: AsyncSessionDep, period_service: PeriodServiceDep
     ) -> None:
         self.session = session
         self.period_service = period_service
@@ -45,8 +46,12 @@ class ReportService:
 
     async def generate_period_pdf(self, period_id: str, user: User) -> bytes:
         """Generates a professional PDF report for a specific period."""
-        period = await self.period_service.read(period_id, user.id)
-        summary = await self.period_service.get_summary(period_id, user.id)
+        p_id = (
+            uuid.UUID(period_id) if isinstance(period_id, str) else period_id
+        )
+
+        period = await self.period_service.read(p_id, user.id)
+        summary = await self.period_service.get_summary(p_id, user.id)
 
         statement = (
             select(Expense)

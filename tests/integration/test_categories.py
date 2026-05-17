@@ -17,16 +17,16 @@ async def test_create_category_success(client: AsyncClient, access_token: str):
     assert "id" in data
 
 
-async def test_create_category_duplicate_name_fails(client: AsyncClient, access_token: str):
+async def test_create_category_duplicate_name_fails(
+    client: AsyncClient, access_token: str
+):
     headers = {"Authorization": f"Bearer {access_token}"}
     payload = {"name": "Lazer"}
     await client.post(categories_url, json=payload, headers=headers)
 
-    # Tenta criar de novo com o mesmo nome
     response = await client.post(categories_url, json=payload, headers=headers)
     assert response.status_code == codes.BAD_REQUEST
     assert "Já existe uma categoria com este nome" in response.json()["detail"]
-
 
 
 async def test_read_categories(client: AsyncClient, access_token: str):
@@ -69,7 +69,6 @@ async def test_delete_category(client: AsyncClient, access_token: str):
     )
     assert response.status_code == codes.NO_CONTENT
 
-    # Verifica se sumiu
     get_resp = await client.get(f"{categories_url}{cat_id}", headers=headers)
     assert get_resp.status_code == codes.NOT_FOUND
 
@@ -101,9 +100,9 @@ async def test_delete_category_not_found(
 @pytest.mark.parametrize(
     "payload",
     (
-        {"name": "a"},  # Curto demais
-        {"name": "Invalid123"},  # Caracteres inválidos (números)
-        {"name": " " * 256},  # Longo demais
+        {"name": "a"},
+        {"name": "Invalid123"},
+        {"name": " " * 256},
     ),
 )
 async def test_create_category_validation_fails(

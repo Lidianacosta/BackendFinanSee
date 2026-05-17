@@ -134,9 +134,7 @@ class PeriodService:
         current_period = await self.read(period_id, user_id)
         evolution = []
 
-        # De -3 a +3 meses
         for i in range(-3, 4):
-            # Lógica simples de deslocamento de meses
             target_month = current_period.month.month + i
             target_year = current_period.month.year
 
@@ -149,7 +147,6 @@ class PeriodService:
 
             target_date = date(target_year, target_month, 1)
 
-            # Busca o período (não cria automaticamente aqui para não poluir o banco)
             statement = select(Period).where(
                 col(Period.user_id) == user_id,
                 col(Period.month) == target_date,
@@ -158,7 +155,6 @@ class PeriodService:
             period = result.first()
 
             if period:
-                # Calcula despesas do mês
                 exp_statement = select(func.sum(Expense.value)).where(
                     col(Expense.period_id) == period.id
                 )
@@ -189,7 +185,6 @@ class PeriodService:
         """Get detailed expense analysis for the period."""
         period = await self.read(period_id, user_id)
 
-        # 1. Busca todas as despesas carregando categorias
         statement = (
             select(Expense)
             .where(col(Expense.period_id) == period_id)
@@ -202,7 +197,6 @@ class PeriodService:
             (e.value or Decimal("0.0") for e in expenses), Decimal("0.0")
         )
 
-        # 2. Categoria mais frequente
         category_counts = {}
         for exp in expenses:
             for cat in exp.categories:
@@ -213,18 +207,15 @@ class PeriodService:
             top_cat_id = max(category_counts, key=category_counts.get)
             top_cat_obj = await self.session.get(Category, top_cat_id)
             if top_cat_obj:
-                # Importação local para evitar circularidade se necessário, mas aqui estamos no service
                 from src.schemas.categories import CategoryRead
 
                 top_category = CategoryRead.model_validate(top_cat_obj)
 
-        # 3. Média diária
         _, last_day = monthrange(period.month.year, period.month.month)
         daily_average = (
             total_expense / last_day if last_day > 0 else Decimal("0.0")
         )
 
-        # 4. Evolução diária (blocos de 5 dias)
         daily_evolution = []
         for start_day in range(1, last_day + 1, 5):
             end_day = min(start_day + 4, last_day)
