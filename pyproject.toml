@@ -1,7 +1,7 @@
 [project]
 name = "banckendfinansee"
 version = "0.1.0"
-description = "Add your description here"
+description = "Backend para controle financeiro pessoal"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
