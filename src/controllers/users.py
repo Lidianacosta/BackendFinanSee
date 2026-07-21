@@ -1,3 +1,5 @@
+"""User endpoints."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, status
@@ -18,7 +20,7 @@ async def create_user(
     email_service: EmailServiceDep,
     background_tasks: BackgroundTasks,
 ):
-    """Create a new user in the system."""
+    """Create a new user."""
     user = await service.create(user_data)
     await email_service.send_welcome_email(
         user.email, user.name, background_tasks
@@ -30,17 +32,17 @@ async def create_user(
 async def read_user_me(
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    """Retrieve the profile of the authenticated user."""
+    """Get the profile of the currently logged-in user."""
     return current_user
 
 
 @router.patch("/me/", response_model=UserRead)
 async def update_user_me(
     user_data: UserUpdate,
-    current_user: Annotated[User, Depends(get_current_active_user)],
     service: UserServiceDep,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    """Update the profile of the authenticated user."""
+    """Update the current user's profile."""
     return await service.update_me(current_user, user_data)
 
 
@@ -49,5 +51,5 @@ async def delete_user_me(
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: UserServiceDep,
 ):
-    """Remove the authenticated user's account from the system."""
-    await service.delete(current_user.id)
+    """Delete the current user's account."""
+    await service.delete_me(current_user)

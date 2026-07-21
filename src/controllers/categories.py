@@ -1,9 +1,11 @@
+"""Category endpoints."""
+
 import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
-from src.models.users import User
+from src.models.categories import Category
 from src.schemas.categories import CategoryCreate, CategoryRead, CategoryUpdate
 from src.services.categories import CategoryServiceDep
 from src.utils.security import get_current_active_user
@@ -16,29 +18,29 @@ router = APIRouter(prefix="/categories", tags=["Categories"])
 )
 async def create_category(
     category_data: CategoryCreate,
-    current_user: Annotated[User, Depends(get_current_active_user)],
     service: CategoryServiceDep,
+    current_user: Annotated[Category, Depends(get_current_active_user)],
 ):
-    """Create a new category for the authenticated user."""
+    """Create a new category."""
     return await service.create(category_data, current_user.id)
 
 
 @router.get("/", response_model=list[CategoryRead])
 async def read_categories(
-    current_user: Annotated[User, Depends(get_current_active_user)],
     service: CategoryServiceDep,
+    current_user: Annotated[Category, Depends(get_current_active_user)],
 ):
-    """List all categories for the authenticated user."""
+    """List all categories for the current user."""
     return await service.read_all(current_user.id)
 
 
 @router.get("/{category_id}", response_model=CategoryRead)
 async def read_category(
     category_id: uuid.UUID,
-    current_user: Annotated[User, Depends(get_current_active_user)],
     service: CategoryServiceDep,
+    current_user: Annotated[Category, Depends(get_current_active_user)],
 ):
-    """Retrieve details of a specific category."""
+    """Retrieve a specific category."""
     return await service.read(category_id, current_user.id)
 
 
@@ -46,18 +48,18 @@ async def read_category(
 async def update_category(
     category_id: uuid.UUID,
     category_data: CategoryUpdate,
-    current_user: Annotated[User, Depends(get_current_active_user)],
     service: CategoryServiceDep,
+    current_user: Annotated[Category, Depends(get_current_active_user)],
 ):
-    """Update an existing category."""
+    """Update a category."""
     return await service.update(category_id, category_data, current_user.id)
 
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_category(
     category_id: uuid.UUID,
-    current_user: Annotated[User, Depends(get_current_active_user)],
     service: CategoryServiceDep,
+    current_user: Annotated[Category, Depends(get_current_active_user)],
 ):
-    """Remove a category from the system."""
+    """Delete a category."""
     await service.delete(category_id, current_user.id)

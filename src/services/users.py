@@ -3,7 +3,6 @@
 Provides business logic and database interactions for managing users.
 """
 
-import uuid
 from datetime import date
 from typing import Annotated
 
@@ -46,22 +45,12 @@ class UserService:
         await self.session.refresh(user)
         return user
 
-    async def read(self, user_id: uuid.UUID) -> User:
-        """Retrieve a user by their ID."""
-        return await self.__get_by_id(user_id)
-
-    async def update(
-        self, user_id: uuid.UUID, user_update: UserUpdate
-    ) -> User:
-        """Update an existing user by ID."""
-        user = await self.__get_by_id(user_id)
-        return await self.update_me(user, user_update)
-
     async def update_me(self, user: User, user_update: UserUpdate) -> User:
         """Update the currently authenticated user and sync income with current period."""
         data = user_update.model_dump(exclude_unset=True)
 
-        income_changed = "income" in data and data["income"] != user.income
+        new_income = data.get("income")
+        income_changed = new_income is not None and new_income != user.income
 
         if "password" in data:
             user.hashed_password = get_password_hash(data.pop("password"))
@@ -75,16 +64,15 @@ class UserService:
             current_period = await self.period_service.get_or_create_by_date(
                 user.id, date.today()
             )
-            current_period.total_income = user.income
+            current_period.total_income = new_income
             self.session.add(current_period)
 
         await self.session.commit()
         await self.session.refresh(user)
         return user
 
-    async def delete(self, user_id: uuid.UUID) -> None:
+    async def delete_me(self, user: User) -> None:
         """Delete a user."""
-        user = await self.__get_by_id(user_id)
         await self.session.delete(user)
         await self.session.commit()
 
@@ -105,15 +93,6 @@ class UserService:
         user.hashed_password = get_password_hash(new_password)
         self.session.add(user)
         await self.session.commit()
-
-    async def __get_by_id(self, user_id: uuid.UUID) -> User:
-        """Internal helper to retrieve a user by ID."""
-        user = await self.session.get(User, user_id)
-        if not user:
-            raise HTTPException(
-                status_code=404, detail="Usuário não encontrado"
-            )
-        return user
 
 
 UserServiceDep = Annotated[UserService, Depends(UserService)]

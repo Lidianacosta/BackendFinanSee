@@ -1,4 +1,8 @@
-"""Expense service layer."""
+"""Expense service layer.
+
+Handles complex business logic for expenses, including relationship mapping,
+automatic period resolution, and multi-criteria filtering.
+"""
 
 import uuid
 from typing import Annotated
@@ -15,7 +19,10 @@ from src.utils.database import AsyncSessionDep
 
 
 class ExpenseService:
+    """Service for expense-related operations."""
+
     def __init__(self, session: AsyncSessionDep) -> None:
+        """Initialize ExpenseService with a database session."""
         self.session = session
 
     async def create(
@@ -24,7 +31,10 @@ class ExpenseService:
         user_id: uuid.UUID,
         period_service: PeriodService,
     ) -> Expense:
-        """Create an expense and associate it with categories. Automatically resolves the period if necessary."""
+        """Create an expense and associate it with categories.
+
+        Automatically resolves the period if necessary.
+        """
         data = expense_create.model_dump(exclude={"category_ids", "period_id"})
 
         period_id = expense_create.period_id
@@ -118,6 +128,13 @@ class ExpenseService:
     ) -> Expense:
         """Update an expense."""
         expense = await self.read(expense_id, user_id)
+        
+        if expense.status == ExpenseEnum.PAID and expense_update.status == ExpenseEnum.PAID:
+            raise HTTPException(
+                status_code=400,
+                detail="A despesa já está paga"
+            )
+
         data = expense_update.model_dump(
             exclude_unset=True, exclude={"category_ids"}
         )

@@ -1,4 +1,8 @@
-"""Period service layer."""
+"""Financial period service layer.
+
+Provides logic for managing monthly periods, calculating summaries,
+and generating financial analytics like evolution and expense analysis.
+"""
 
 import uuid
 from calendar import monthrange
@@ -27,16 +31,22 @@ from src.utils.database import AsyncSessionDep
 
 
 class PeriodService:
+    """Service for financial period operations."""
+
     def __init__(self, session: AsyncSessionDep) -> None:
+        """Initialize PeriodService with a database session."""
         self.session = session
 
     async def create(
         self, period_create: PeriodCreate, user_id: uuid.UUID
     ) -> Period:
         """Create a new financial period (month) for the user."""
+        first_day = period_create.month.replace(day=1)
+        period_create.month = first_day
+
         statement = select(Period).where(
             col(Period.user_id) == user_id,
-            col(Period.month) == period_create.month,
+            col(Period.month) == first_day,
         )
         result = await self.session.exec(statement)
         if result.first():

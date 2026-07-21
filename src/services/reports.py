@@ -1,33 +1,31 @@
-"""Report service layer for PDF generation."""
+"""Service for generating financial reports in PDF format."""
 
 import uuid
 from datetime import date
-from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends
 from jinja2 import Environment, FileSystemLoader
-from sqlalchemy.orm import selectinload
-from sqlmodel import col, select
 from weasyprint import HTML
 
-from src.models.expenses import Expense
 from src.models.users import User
 from src.services.periods import PeriodServiceDep
 from src.utils.database import AsyncSessionDep
 
 
 class ReportService:
+    """Service to handle the creation and rendering of PDF reports."""
+
     def __init__(
         self, session: AsyncSessionDep, period_service: PeriodServiceDep
     ) -> None:
+        """Initialize ReportService with dependencies."""
         self.session = session
         self.period_service = period_service
+        self.jinja_env = Environment(loader=FileSystemLoader("src/templates"))
 
-        template_path = Path(__file__).parent.parent / "templates"
-        self.jinja_env = Environment(loader=FileSystemLoader(template_path))
-
-    def _get_month_name(self, month_date: date) -> str:
+    def _get_month_name(self, month: date) -> str:
+        """Translate month number to Portuguese name."""
         months = {
             1: "Janeiro",
             2: "Fevereiro",
@@ -42,34 +40,22 @@ class ReportService:
             11: "Novembro",
             12: "Dezembro",
         }
-        return f"{months[month_date.month]} de {month_date.year}"
+        return months.get(month.month, "")
 
-    async def generate_period_pdf(self, period_id: str, user: User) -> bytes:
-        """Generates a professional PDF report for a specific period."""
-        p_id = (
-            uuid.UUID(period_id) if isinstance(period_id, str) else period_id
-        )
-
-        period = await self.period_service.read(p_id, user.id)
-        summary = await self.period_service.get_summary(p_id, user.id)
-
-        statement = (
-            select(Expense)
-            .where(col(Expense.period_id) == period.id)
-            .options(selectinload(Expense.categories))
-            .order_by(col(Expense.due_date))
-        )
-        result = await self.session.exec(statement)
-        expenses = result.all()
+    async def generate_period_pdf(
+        self, period_id: uuid.UUID, user: User
+    ) -> bytes:
+        """Render and generate a PDF report for a financial period."""
+        period = await self.period_service.read(period_id, user.id)
+        summary = await self.period_service.get_summary(period_id, user.id)
 
         template = self.jinja_env.get_template("report.html")
         html_content = template.render(
             user=user,
             period=period,
-            period_month=self._get_month_name(period.month),
             summary=summary,
-            expenses=expenses,
-            today_str=date.today().strftime("%d/%m/%Y"),
+            month_name=self._get_month_name(period.month),
+            generation_date=date.today().strftime("%d/%m/%Y"),
         )
 
         pdf_bytes = HTML(string=html_content).write_pdf()

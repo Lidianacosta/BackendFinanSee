@@ -1,5 +1,6 @@
+"""Financial period endpoints."""
+
 import uuid
-from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response, status
@@ -24,86 +25,87 @@ router = APIRouter(prefix="/periods", tags=["Periods"])
 )
 async def create_period(
     period_data: PeriodCreate,
-    current_user: Annotated[User, Depends(get_current_active_user)],
     service: PeriodServiceDep,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    """Create a new financial period (month) for the user."""
+    """Create a new financial period."""
     return await service.create(period_data, current_user.id)
 
 
 @router.get("/", response_model=list[PeriodRead])
 async def read_periods(
-    current_user: Annotated[User, Depends(get_current_active_user)],
     service: PeriodServiceDep,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    """List all financial periods for the authenticated user."""
+    """List all financial periods for the current user."""
     return await service.read_all(current_user.id)
 
 
 @router.get("/current/", response_model=PeriodRead)
 async def read_current_period(
-    current_user: Annotated[User, Depends(get_current_active_user)],
     service: PeriodServiceDep,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    """Retrieve the current financial period (auto-creates if missing)."""
+    """Retrieve or create the financial period for the current month."""
+    from datetime import date
+
     return await service.get_or_create_by_date(current_user.id, date.today())
 
 
 @router.get("/{period_id}", response_model=PeriodRead)
 async def read_period(
     period_id: uuid.UUID,
-    current_user: Annotated[User, Depends(get_current_active_user)],
     service: PeriodServiceDep,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    """Retrieve details of a specific financial period."""
+    """Retrieve a specific financial period."""
     return await service.read(period_id, current_user.id)
 
 
 @router.get("/{period_id}/summary", response_model=PeriodSummary)
 async def read_period_summary(
     period_id: uuid.UUID,
-    current_user: Annotated[User, Depends(get_current_active_user)],
     service: PeriodServiceDep,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    """Return the financial summary (Balance, Paid/Pending Expenses) for the period."""
+    """Get financial summary for a period."""
     return await service.get_summary(period_id, current_user.id)
 
 
 @router.get("/{period_id}/evolution", response_model=FinancialEvolution)
-async def read_period_evolution(
+async def read_financial_evolution(
     period_id: uuid.UUID,
-    current_user: Annotated[User, Depends(get_current_active_user)],
     service: PeriodServiceDep,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    """Return the financial evolution (7-month window) around the period."""
+    """Get financial evolution analytics."""
     return await service.get_financial_evolution(period_id, current_user.id)
 
 
 @router.get("/{period_id}/analysis", response_model=ExpenseAnalysis)
-async def read_period_analysis(
+async def read_expense_analysis(
     period_id: uuid.UUID,
-    current_user: Annotated[User, Depends(get_current_active_user)],
     service: PeriodServiceDep,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    """Return a detailed expense analysis (top category, daily average, 5-day intervals)."""
+    """Get detailed expense analysis."""
     return await service.get_expense_analysis(period_id, current_user.id)
 
 
-@router.get("/{period_id}/export", status_code=status.HTTP_200_OK)
+@router.get("/{period_id}/export")
 async def export_period_pdf(
     period_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    service: ReportServiceDep,
+    report_service: ReportServiceDep,
 ):
-    """Generate and export a professional PDF report for the period."""
-    pdf_bytes = await service.generate_period_pdf(str(period_id), current_user)
-
-    filename = (
-        f"relatorio_{current_user.name.replace(' ', '_')}_{period_id}.pdf"
+    """Export period data as a PDF report."""
+    pdf_content = await report_service.generate_period_pdf(
+        period_id, current_user
     )
-
     return Response(
-        content=pdf_bytes,
+        content=pdf_content,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
+        headers={
+            "Content-Disposition": f"attachment; filename=report_{period_id}.pdf"
+        },
     )

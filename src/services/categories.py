@@ -1,4 +1,8 @@
-"""Category service layer."""
+"""Category service layer.
+
+Handles business logic for category management, including CRUD operations
+and duplicate checks.
+"""
 
 import uuid
 from typing import Annotated
@@ -13,7 +17,10 @@ from src.utils.database import AsyncSessionDep
 
 
 class CategoryService:
+    """Service for category-related operations."""
+
     def __init__(self, session: AsyncSessionDep) -> None:
+        """Initialize CategoryService with a database session."""
         self.session = session
 
     async def create(
@@ -75,9 +82,22 @@ class CategoryService:
         category_update: CategoryUpdate,
         user_id: uuid.UUID,
     ) -> Category:
-        """Update a category for the authenticated user."""
+        """Update a category and check for name duplicates."""
         category = await self.read(category_id, user_id)
         data = category_update.model_dump(exclude_unset=True)
+
+        if "name" in data and data["name"] != category.name:
+            statement = select(Category).where(
+                col(Category.user_id) == user_id,
+                col(Category.name) == data["name"],
+                col(Category.id) != category_id,
+            )
+            result = await self.session.exec(statement)
+            if result.first():
+                raise HTTPException(
+                    status_code=400,
+                    detail="Já existe uma categoria com este nome",
+                )
 
         for attr, value in data.items():
             setattr(category, attr, value)
@@ -90,6 +110,13 @@ class CategoryService:
     async def delete(self, category_id: uuid.UUID, user_id: uuid.UUID) -> None:
         """Delete a category for the authenticated user."""
         category = await self.read(category_id, user_id)
+        
+        if category.expenses:
+            raise HTTPException(
+                status_code=400,
+                detail="Não é possível deletar uma categoria que possui despesas"
+            )
+            
         await self.session.delete(category)
         await self.session.commit()
 
