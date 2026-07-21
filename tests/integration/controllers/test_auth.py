@@ -245,3 +245,71 @@ async def test_reset_password_fails_for_non_existent_user(client: AsyncClient):
 
     assert response.status_code == codes.NOT_FOUND
     assert "Usuário não encontrado" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_login_returns_refresh_token(
+    client: AsyncClient, test_user_data: dict
+):
+    """Login should include a refresh_token alongside the access_token."""
+    await client.post("/api/users/", json=test_user_data)
+    resp = await client.post(
+        "/api/auth/token",
+        data={
+            "username": test_user_data["email"],
+            "password": test_user_data["password"],
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    assert resp.status_code == codes.OK
+    data = resp.json()
+    assert "access_token" in data
+    assert "refresh_token" in data
+    assert data["token_type"] == "bearer"
+
+
+@pytest.mark.asyncio
+async def test_refresh_endpoint_returns_new_access_token(
+    client: AsyncClient, test_user_data: dict
+):
+    """The /auth/refresh endpoint should issue a new access token."""
+    await client.post("/api/users/", json=test_user_data)
+    login_resp = await client.post(
+        "/api/auth/token",
+        data={
+            "username": test_user_data["email"],
+            "password": test_user_data["password"],
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    refresh_token = login_resp.json()["refresh_token"]
+
+    resp = await client.post(
+        "/api/auth/refresh", json={"refresh_token": refresh_token}
+    )
+    assert resp.status_code == codes.OK
+    data = resp.json()
+    assert "access_token" in data
+    assert data["refresh_token"] == refresh_token
+
+
+@pytest.mark.asyncio
+async def test_refresh_fails_with_access_token(
+    client: AsyncClient, test_user_data: dict
+):
+    """An access token should not be valid for the /auth/refresh endpoint."""
+    await client.post("/api/users/", json=test_user_data)
+    login_resp = await client.post(
+        "/api/auth/token",
+        data={
+            "username": test_user_data["email"],
+            "password": test_user_data["password"],
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    access_token = login_resp.json()["access_token"]
+
+    resp = await client.post(
+        "/api/auth/refresh", json={"refresh_token": access_token}
+    )
+    assert resp.status_code == codes.UNAUTHORIZED

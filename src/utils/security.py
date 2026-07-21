@@ -1,7 +1,7 @@
 """Security operations and JWT management.
 
-Provides dependencies for authenticating users, generating access tokens,
-and extracting the current user from active requests.
+Provides dependencies for authenticating users, generating access and
+refresh tokens, and extracting the current user from active requests.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -35,20 +35,36 @@ async def authenticate_user(
     return user
 
 
+def _create_token(
+    data: dict, expires_delta: timedelta, token_type: str
+) -> str:
+    """Build a signed JWT with the given payload, expiry and type claim."""
+    to_encode = data.copy()
+    expire = datetime.now(UTC) + expires_delta
+    to_encode.update({"exp": expire, "type": token_type})
+    return jwt.encode(
+        to_encode, settings.secret_key, algorithm=settings.algorithm
+    )
+
+
 def create_access_token(
     data: dict, expires_delta: timedelta | None = None
 ) -> str:
-    """Generate a JWT access token encoding the provided data."""
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now(UTC) + expires_delta
-    else:
-        expire = datetime.now(UTC) + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
-        to_encode, settings.secret_key, algorithm=settings.algorithm
+    """Generate a JWT access token (short-lived)."""
+    delta = expires_delta or timedelta(
+        minutes=settings.access_token_expire_minutes
     )
-    return encoded_jwt
+    return _create_token(data, delta, token_type="access")
+
+
+def create_refresh_token(
+    data: dict, expires_delta: timedelta | None = None
+) -> str:
+    """Generate a JWT refresh token (long-lived)."""
+    delta = expires_delta or timedelta(
+        minutes=settings.refresh_token_expire_minutes
+    )
+    return _create_token(data, delta, token_type="refresh")
 
 
 def create_password_reset_token(email: str) -> str:
@@ -60,40 +76,54 @@ def create_password_reset_token(email: str) -> str:
     )
 
 
-def verify_password_reset_token(token: str) -> str | None:
-    """Verify a password reset token and return the email if valid."""
-    try:
-        payload = jwt.decode(
-            token, settings.secret_key, algorithms=[settings.algorithm]
-        )
-        if payload.get("type") != "password_reset":
-            return None
-        return payload.get("sub")
-    except InvalidTokenError:
-        return None
-
-
-async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)], user_service: UserServiceDep
-):
-    """Retrieve the current user from an incoming JWT token."""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Não foi possível validar as credenciais",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+def _decode_token_type(token: str, expected_type: str) -> dict | None:
+    """Decode a JWT and return payload only if type matches."""
     try:
         payload = jwt.decode(
             token,
             settings.secret_key,
             algorithms=[settings.algorithm],
         )
-        email = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-        token_data = TokenData(email=email)
-    except InvalidTokenError as e:
-        raise credentials_exception from e
+        if payload.get("type") != expected_type:
+            return None
+        return payload
+    except InvalidTokenError:
+        return None
+
+
+def verify_password_reset_token(token: str) -> str | None:
+    """Verify a password reset token and return the email if valid."""
+    payload = _decode_token_type(token, "password_reset")
+    if payload is None:
+        return None
+    return payload.get("sub")
+
+
+def verify_refresh_token(token: str) -> str | None:
+    """Verify a refresh token and return the email (sub) if valid."""
+    payload = _decode_token_type(token, "refresh")
+    if payload is None:
+        return None
+    return payload.get("sub")
+
+
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    user_service: UserServiceDep,
+):
+    """Retrieve the current user from an incoming access JWT token."""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Não foi possível validar as credenciais",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    payload = _decode_token_type(token, "access")
+    if payload is None:
+        raise credentials_exception
+    email = payload.get("sub")
+    if email is None:
+        raise credentials_exception
+    token_data = TokenData(email=email)
     user = await user_service.get_user_by_email(str(token_data.email))
     if user is None:
         raise credentials_exception

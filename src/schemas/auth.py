@@ -12,11 +12,20 @@ class Token(BaseModel):
     Attributes:
         access_token: The generated JWT access token string.
         token_type: The type of the token, typically 'bearer'.
-
+        refresh_token: Optional JWT refresh token string.
     """
 
     access_token: str
     token_type: str
+    refresh_token: str | None = None
+
+
+class TokenPair(BaseModel):
+    """Pair of access and refresh tokens returned on login/refresh."""
+
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
 
 
 class TokenData(BaseModel):
@@ -51,3 +60,9 @@ class ResetPasswordIn(BaseModel):
         if self.new_password != self.confirm_password:
             raise ValueError("As senhas não coincidem")
         return self
+
+
+class RefreshIn(BaseModel):
+    """Request body for the /auth/refresh endpoint."""
+
+    refresh_token: str
