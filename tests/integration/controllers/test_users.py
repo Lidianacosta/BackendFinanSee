@@ -1,7 +1,8 @@
+import uuid
+
 import pytest
 from httpx import AsyncClient, codes
 
-# O prefixo agora é apenas /users/ conforme configurado no main.py
 users_url = "/api/users/"
 
 
@@ -42,7 +43,6 @@ async def test_create_user_fail_for_invalid_field(
     assert response.status_code == codes.UNPROCESSABLE_ENTITY
     data = response.json()
 
-    # Verifica se a mensagem de erro esperada está em algum lugar dos erros do Pydantic
     error_messages = [err["msg"] for err in data["detail"]]
     assert any(expected_error in msg for msg in error_messages)
 
@@ -59,10 +59,8 @@ async def test_read_user_me_is_success(
 
 
 async def test_login_success(client: AsyncClient, test_user_data: dict):
-    # Primeiro criamos o usuário
     await client.post(users_url, json=test_user_data)
 
-    # Tentamos logar
     login_data = {
         "username": test_user_data["email"],
         "password": test_user_data["password"],
@@ -75,3 +73,56 @@ async def test_login_success(client: AsyncClient, test_user_data: dict):
 
     assert response.status_code == codes.OK
     assert "access_token" in response.json()
+
+
+async def test_create_user_duplicate_email_fails(
+    client: AsyncClient, test_user_data: dict
+):
+    await client.post(users_url, json=test_user_data)
+    response = await client.post(users_url, json=test_user_data)
+    assert response.status_code == codes.BAD_REQUEST
+    assert "E-mail já cadastrado" in response.json()["detail"]
+
+
+async def test_update_user_partial_success(
+    client: AsyncClient, access_token: str
+):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    payload = {"name": "Lidiana Updated", "income": 7000.0}
+    response = await client.patch(
+        f"{users_url}me/", json=payload, headers=headers
+    )
+
+    assert response.status_code == codes.OK
+    data = response.json()
+    assert data["name"] == "Lidiana Updated"
+    assert float(data["income"]) == 7000.0
+
+
+async def test_update_user_password_success(
+    client: AsyncClient, access_token: str, test_user_data: dict
+):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    new_pass = "new_secret_123"
+    payload = {"password": new_pass}
+    response = await client.patch(
+        f"{users_url}me/", json=payload, headers=headers
+    )
+    assert response.status_code == codes.OK
+
+    login_data = {"username": test_user_data["email"], "password": new_pass}
+    login_resp = await client.post(
+        "/api/auth/token",
+        data=login_data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    assert login_resp.status_code == codes.OK
+
+
+async def test_read_user_not_found_admin_route(
+    client: AsyncClient, access_token: str
+):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    random_id = uuid.uuid4()
+    response = await client.get(f"{users_url}{random_id}", headers=headers)
+    assert response.status_code == codes.NOT_FOUND
