@@ -1,7 +1,7 @@
 """Main entry point for the FinanSee API.
 
 This module initializes the FastAPI application, sets up the database,
-and includes all the application routers.
+configures CORS and logging, and includes all the application routers.
 """
 
 from contextlib import asynccontextmanager
@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.controllers import auth, categories, expenses, periods, users
 from src.core.config import settings
+from src.core.logging import RequestLoggingMiddleware, configure_logging
 from src.utils.database import async_create_db_and_tables
 
 
@@ -22,6 +23,7 @@ async def lifespan(app: FastAPI):
     environments we fall back to SQLModel.metadata.create_all for ease
     of use and in-memory SQLite in tests.
     """
+    configure_logging()
     if settings.environment != "production":
         await async_create_db_and_tables()
     yield
@@ -41,6 +43,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(RequestLoggingMiddleware)
 
 API_PREFIX = "/api"
 
