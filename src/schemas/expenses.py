@@ -1,3 +1,8 @@
+"""Expense schema definitions.
+
+Pydantic models for expense data validation and API representation.
+"""
+
 import uuid
 from datetime import date
 from decimal import Decimal
@@ -11,6 +16,8 @@ from src.utils.validators import validate_description, validate_name
 
 
 class ExpenseBase(BaseModel):
+    """Base schema for expense data."""
+
     name: str = Field(min_length=2, max_length=255)
     value: Decimal = Field(ge=0, decimal_places=2)
     due_date: date
@@ -22,6 +29,7 @@ class ExpenseBase(BaseModel):
     @field_validator("name")
     @classmethod
     def check_name(cls, v: str) -> str:
+        """Validate expense name."""
         if not validate_name(v):
             raise ValueError("O nome contém caracteres inválidos")
         return v
@@ -29,17 +37,22 @@ class ExpenseBase(BaseModel):
     @field_validator("description")
     @classmethod
     def check_description(cls, v: str | None) -> str | None:
+        """Validate expense description."""
         if v and not validate_description(v):
             raise ValueError("A descrição contém caracteres inválidos")
         return v
 
 
 class ExpenseCreate(ExpenseBase):
+    """Schema for creating a new expense."""
+
     period_id: uuid.UUID | None = None
     category_ids: list[uuid.UUID] = []
 
 
 class ExpenseUpdate(BaseModel):
+    """Schema for updating an existing expense."""
+
     name: str | None = Field(default=None, min_length=2, max_length=255)
     value: Decimal | None = Field(default=None, ge=0, decimal_places=2)
     due_date: date | None = None
@@ -53,12 +66,15 @@ class ExpenseUpdate(BaseModel):
     @field_validator("name")
     @classmethod
     def check_name(cls, v: str | None) -> str | None:
+        """Validate name update."""
         if v and not validate_name(v):
             raise ValueError("O nome contém caracteres inválidos")
         return v
 
 
 class ExpenseRead(ExpenseBase):
+    """Schema for reading expense data from the API."""
+
     id: uuid.UUID
     user_id: uuid.UUID
     period_id: uuid.UUID

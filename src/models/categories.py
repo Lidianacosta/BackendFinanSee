@@ -1,3 +1,8 @@
+"""Category database model for FinanSee.
+
+Categories help users organize their expenses.
+"""
+
 import uuid
 from typing import TYPE_CHECKING
 
@@ -12,6 +17,8 @@ if TYPE_CHECKING:
 
 
 class Category(BaseModel, table=True):
+    """Represents a category for expenses."""
+
     name: str | None = Field(default=None, unique=True)
     description: str | None = None
     user_id: uuid.UUID | None = Field(
@@ -25,4 +32,5 @@ class Category(BaseModel, table=True):
     )
 
     def __str__(self):
+        """Returns the string representation of the category."""
         return str(self.name)

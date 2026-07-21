@@ -1,3 +1,9 @@
+"""Main entry point for the FinanSee API.
+
+This module initializes the FastAPI application, sets up the database,
+and includes all the application routers.
+"""
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI

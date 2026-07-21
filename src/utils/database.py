@@ -33,8 +33,6 @@ async_engine = create_async_engine(
 
 async def async_create_db_and_tables() -> None:
     """Create all database tables defined by SQLModel metadata."""
-    from src import models  # noqa
-
     async with async_engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 

@@ -1,3 +1,8 @@
+"""Financial period model.
+
+Defines the structure for tracking monthly financial data and income.
+"""
+
 import uuid
 from datetime import date
 from decimal import Decimal
@@ -15,6 +20,8 @@ if TYPE_CHECKING:
 
 
 class Period(BaseModel, table=True):
+    """Financial period for a user."""
+
     user_id: uuid.UUID | None = Field(
         foreign_key="user.id", ondelete="CASCADE"
     )
@@ -34,6 +41,7 @@ class Period(BaseModel, table=True):
     @field_validator("month", mode="before")
     @classmethod
     def force_first_day_of_month(cls, v):
+        """Ensure the date provided is normalized to the first day of the month."""
         if isinstance(v, date):
             return v.replace(day=1)
         if isinstance(v, str):

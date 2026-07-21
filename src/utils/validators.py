@@ -1,3 +1,9 @@
+"""Data validation utilities.
+
+Provides functions for validating CPF, phone numbers, names, descriptions,
+and calculating age.
+"""
+
 import re
 from datetime import date
 
@@ -17,12 +23,15 @@ def validate_cpf(cpf: str) -> bool:
 
 
 def validate_phone(phone: str) -> bool:
-    """Simple regex for Brazilian phone numbers: (XX) 9XXXX-XXXX or XXXXXXXXXXX."""
-    phone = re.sub(r"\D", "", phone)
-    return len(phone) in [10, 11]
+    """Strictly validate Brazilian phone numbers (only 10 or 11 digits)."""
+    numbers_only = re.sub(r"\D", "", phone)
+    if len(numbers_only) != len(phone) or len(numbers_only) not in [10, 11]:
+        return False
+    return True
 
 
 def calculate_age(birth_date: date) -> int:
+    """Calculate the age based on the birth date."""
     today = date.today()
     return (
         today.year
@@ -32,10 +41,10 @@ def calculate_age(birth_date: date) -> int:
 
 
 def validate_name(name: str) -> bool:
-    """Original name_regex_validator logic: only letters and spaces."""
-    return bool(re.match(r"^[A-Za-zÀ-ÿ\s]+$", name))
+    """Strict name validation: only letters and spaces."""
+    return bool(re.fullmatch(r"[A-Za-zÀ-ÿ\s]+", name))
 
 
 def validate_description(description: str) -> bool:
-    """Original description regex: letters, numbers, spaces, and common punctuation."""
-    return bool(re.match(r"^[A-Za-zÀ-ÿ0-9\s.,!?-]+$", description))
+    """Strict description validation."""
+    return bool(re.fullmatch(r"[A-Za-zÀ-ÿ0-9\s.,!?-]+", description))

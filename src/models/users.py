@@ -1,3 +1,8 @@
+"""User model definition.
+
+Defines the structure for system users, including profile and status fields.
+"""
+
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
@@ -13,6 +18,8 @@ if TYPE_CHECKING:
 
 
 class User(BaseModel, table=True):
+    """System user entity."""
+
     name: str | None = None
     email: str | None = Field(default=None, unique=True, nullable=True)
     hashed_password: str = Field()
@@ -36,4 +43,5 @@ class User(BaseModel, table=True):
     )
 
     def __str__(self):
+        """String representation of the user."""
         return str(self.email)

@@ -1,3 +1,8 @@
+"""Expense database model for FinanSee.
+
+This module defines the Expense entity and its related status enumeration.
+"""
+
 import uuid
 from datetime import date as date_datetime
 from decimal import Decimal
@@ -16,11 +21,15 @@ if TYPE_CHECKING:
 
 
 class ExpenseEnum(StrEnum):
+    """Possible statuses for an expense."""
+
     PENDING = "PENDING"
     PAID = "PAID"
 
 
 class Expense(BaseModel, table=True):
+    """Represents an expense record."""
+
     user_id: uuid.UUID | None = Field(
         foreign_key="user.id", ondelete="CASCADE"
     )
@@ -50,4 +59,5 @@ class Expense(BaseModel, table=True):
     status: ExpenseEnum = Field(default=ExpenseEnum.PENDING)
 
     def __str__(self):
+        """Returns the string representation of the expense."""
         return str(self.name)

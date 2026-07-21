@@ -24,39 +24,21 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/token")
 async def authenticate_user(
     email: str, password: str, user_service: UserServiceDep
 ):
-    """Authenticate a user using their email and password.
-
-    Args:
-        email: The attempted email.
-        password: The attempted plain text password.
-        user_service: Dependency providing user database operations.
-
-    Returns:
-        The User instance if authentication succeeds, False otherwise.
-
-    """
+    """Authenticate a user by email and password."""
     user = await user_service.get_user_by_email(email)
     if not user:
-        return False
+        return None
     if not verify_password(password, user.hashed_password):
-        return False
+        return None
+    if not user.is_active:
+        return None
     return user
 
 
 def create_access_token(
     data: dict, expires_delta: timedelta | None = None
 ) -> str:
-    """Generate a JWT access token encoding the provided data.
-
-    Args:
-        data: A dict containing payload items (e.g., {"sub": email}).
-        expires_delta: Optional timedelta for token expiration. If none,
-            expires in 15 minutes.
-
-    Returns:
-        The encoded JWT string.
-
-    """
+    """Generate a JWT access token encoding the provided data."""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(UTC) + expires_delta
@@ -94,22 +76,7 @@ def verify_password_reset_token(token: str) -> str | None:
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)], user_service: UserServiceDep
 ):
-    """Retrieve the current user from an incoming JWT token.
-
-    Validates token signature and expiration, extracts the email, and fetches
-    the corresponding user record from the database.
-
-    Args:
-        token: The bearer JWT token from the request authorization header.
-        user_service: Dependency providing user database operations.
-
-    Returns:
-        The current User model instance.
-
-    Raises:
-        HTTPException: 401 if credentials cannot be validated or user doesn't exist.
-
-    """
+    """Retrieve the current user from an incoming JWT token."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Não foi possível validar as credenciais",
@@ -136,20 +103,7 @@ async def get_current_user(
 def get_current_active_user(
     current_user: Annotated[UserRead, Depends(get_current_user)],
 ):
-    """Retrieve the current user ensuring their account is active.
-
-    Depends on `get_current_user` and adds an extra layer of validation.
-
-    Args:
-        current_user: The authenticated User object.
-
-    Returns:
-        The active User instance.
-
-    Raises:
-        HTTPException: 400 if the user account is disabled.
-
-    """
+    """Retrieve the current user ensuring their account is active."""
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Usuário inativo")
     return current_user
