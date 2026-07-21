@@ -35,14 +35,16 @@ class EmailService:
             / "email",
         )
 
+        self.site_name = "FinanSee"
+
     async def send_welcome_email(
         self, email: str, name: str, background_tasks: BackgroundTasks
     ) -> None:
         """Send a welcome email to a newly registered user."""
         message = MessageSchema(
-            subject="Bem-vindo ao FinanSee!",
+            subject=f"Bem-vindo ao {self.site_name}!",
             recipients=[email],
-            template_body={"name": name},
+            template_body={"name": name, "site_name": self.site_name},
             subtype=MessageType.html,
         )
         fm = FastMail(self.config)
@@ -55,9 +57,9 @@ class EmailService:
     ) -> None:
         """Send an email with instructions and token for password reset."""
         message = MessageSchema(
-            subject="Recuperação de Senha - FinanSee",
+            subject=f"Recuperação de Senha - {self.site_name}",
             recipients=[email],
-            template_body={"token": token},
+            template_body={"token": token, "site_name": self.site_name},
             subtype=MessageType.html,
         )
         fm = FastMail(self.config)

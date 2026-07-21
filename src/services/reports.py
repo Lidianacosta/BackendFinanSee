@@ -6,8 +6,11 @@ from typing import Annotated
 
 from fastapi import Depends
 from jinja2 import Environment, FileSystemLoader
+from sqlalchemy.orm import selectinload
+from sqlmodel import col, select
 from weasyprint import HTML
 
+from src.models.expenses import Expense
 from src.models.users import User
 from src.services.periods import PeriodServiceDep
 from src.utils.database import AsyncSessionDep
@@ -49,13 +52,23 @@ class ReportService:
         period = await self.period_service.read(period_id, user.id)
         summary = await self.period_service.get_summary(period_id, user.id)
 
+        statement = (
+            select(Expense)
+            .where(col(Expense.period_id) == period_id)
+            .options(selectinload(Expense.categories))
+            .order_by(col(Expense.due_date))
+        )
+        result = await self.session.exec(statement)
+        expenses = list(result.all())
+
         template = self.jinja_env.get_template("report.html")
         html_content = template.render(
             user=user,
             period=period,
             summary=summary,
-            month_name=self._get_month_name(period.month),
-            generation_date=date.today().strftime("%d/%m/%Y"),
+            expenses=expenses,
+            period_month=self._get_month_name(period.month),
+            today_str=date.today().strftime("%d/%m/%Y"),
         )
 
         pdf_bytes = HTML(string=html_content).write_pdf()
