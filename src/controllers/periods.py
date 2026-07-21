@@ -1,6 +1,7 @@
 """Financial period endpoints."""
 
 import uuid
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response, status
@@ -47,8 +48,6 @@ async def read_current_period(
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     """Retrieve or create the financial period for the current month."""
-    from datetime import date
-
     return await service.get_or_create_by_date(current_user.id, date.today())
 
 

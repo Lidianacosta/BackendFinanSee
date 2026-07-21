@@ -4,7 +4,12 @@ import pytest
 from httpx import AsyncClient, codes
 from sqlmodel import col, select
 
+from src.main import app
 from src.models.users import User
+from src.services.emails import EmailService
+from src.utils.security import create_password_reset_token
+
+auth_url = "/api/auth/"
 
 
 @pytest.mark.asyncio
@@ -57,12 +62,6 @@ async def test_inactive_user_login_fail(
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     assert response.status_code == codes.UNAUTHORIZED
-
-
-import pytest
-from httpx import AsyncClient
-
-from src.utils.security import create_password_reset_token
 
 
 @pytest.mark.asyncio
@@ -124,15 +123,6 @@ async def test_auth_full_flow(client: AsyncClient, test_user_data):
     )
     assert response.status_code == 400
     assert "Token inválido ou expirado" in response.json()["detail"]
-
-
-import pytest
-from httpx import AsyncClient
-
-from src.main import app
-from src.services.emails import EmailService
-
-auth_url = "/api/auth/"
 
 
 @pytest.mark.asyncio
