@@ -16,8 +16,14 @@ from src.utils.database import async_create_db_and_tables
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifecycle events for the FastAPI application."""
-    await async_create_db_and_tables()
+    """Lifecycle events for the FastAPI application.
+
+    Production runs Alembic migrations via CI. In development and test
+    environments we fall back to SQLModel.metadata.create_all for ease
+    of use and in-memory SQLite in tests.
+    """
+    if settings.environment != "production":
+        await async_create_db_and_tables()
     yield
 
 
