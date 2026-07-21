@@ -6,6 +6,7 @@ Categories help users organize their expenses.
 import uuid
 from typing import TYPE_CHECKING
 
+from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, Relationship
 
 from src.models.base import BaseModel
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
 class Category(BaseModel, table=True):
     """Represents a category for expenses."""
 
-    name: str | None = Field(default=None, unique=True)
+    name: str | None = Field(default=None)
     description: str | None = None
     user_id: uuid.UUID | None = Field(
         foreign_key="user.id", ondelete="CASCADE"
@@ -29,6 +30,10 @@ class Category(BaseModel, table=True):
     expenses: list["Expense"] = Relationship(
         back_populates="categories",
         link_model=ExpenseCategoryLink,
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "name", name="unique_user_category"),
     )
 
     def __str__(self):
