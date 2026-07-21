@@ -7,8 +7,10 @@ and includes all the application routers.
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.controllers import auth, categories, expenses, periods, users
+from src.core.config import settings
 from src.utils.database import async_create_db_and_tables
 
 
@@ -24,6 +26,14 @@ app = FastAPI(
     description="Backend para controle financeiro pessoal",
     version="0.1.0",
     lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 API_PREFIX = "/api"
