@@ -16,7 +16,13 @@ db.sqlite
 test.db
 
 # Agents
-.gemini
+.antigravity
+.antigravity.md
 
 # vscode
 .vscode
+
+
+# coverage
+.coverage
+coverage_html
