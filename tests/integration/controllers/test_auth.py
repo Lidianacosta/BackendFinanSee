@@ -145,7 +145,6 @@ async def test_forgot_password_is_success(
 async def test_reset_password_flow_complete(
     client: AsyncClient, test_user_data: dict
 ):
-    from src.utils.security import create_password_reset_token
 
     await client.post("/api/users/", json=test_user_data)
 
@@ -313,3 +312,95 @@ async def test_refresh_fails_with_access_token(
         "/api/auth/refresh", json={"refresh_token": access_token}
     )
     assert resp.status_code == codes.UNAUTHORIZED
+
+
+@pytest.mark.asyncio
+async def test_refresh_fails_with_invalid_token(client: AsyncClient):
+    """A random string is not a valid refresh token."""
+    resp = await client.post(
+        "/api/auth/refresh", json={"refresh_token": "not-a-jwt"}
+    )
+    assert resp.status_code == codes.UNAUTHORIZED
+    assert "Refresh token inválido" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_refresh_fails_for_inactive_user(
+    client: AsyncClient, test_user_data: dict, db
+):
+    """A refresh token issued before the user was deactivated must fail."""
+
+    await client.post("/api/users/", json=test_user_data)
+    login_resp = await client.post(
+        "/api/auth/token",
+        data={
+            "username": test_user_data["email"],
+            "password": test_user_data["password"],
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    refresh_token = login_resp.json()["refresh_token"]
+
+    stmt = select(User).where(col(User.email) == test_user_data["email"])
+    user = (await db.exec(stmt)).first()
+    user.is_active = False
+    db.add(user)
+    await db.commit()
+
+    resp = await client.post(
+        "/api/auth/refresh", json={"refresh_token": refresh_token}
+    )
+    assert resp.status_code == codes.UNAUTHORIZED
+    assert "inválido ou inativo" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_login_success_with_refresh_token(
+    client: AsyncClient, test_user_data: dict
+):
+    """Successful login must return access + refresh + token_type."""
+    await client.post("/api/users/", json=test_user_data)
+    resp = await client.post(
+        "/api/auth/token",
+        data={
+            "username": test_user_data["email"],
+            "password": test_user_data["password"],
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    assert resp.status_code == codes.OK
+    data = resp.json()
+    assert data["token_type"] == "bearer"
+    assert data["access_token"]
+    assert data["refresh_token"]
+
+
+@pytest.mark.asyncio
+async def test_forgot_password_with_nonexistent_email_returns_same_answer(
+    client: AsyncClient,
+):
+    """forgot-password should not leak whether the email exists."""
+    resp = await client.post(
+        "/api/auth/forgot-password", json={"email": "nobody@nowhere.com"}
+    )
+    assert resp.status_code == codes.OK
+    assert "instruções foram enviadas" in resp.json()["message"]
+
+
+@pytest.mark.asyncio
+async def test_reset_password_succeeds_for_existing_user(
+    client: AsyncClient, test_user_data: dict
+):
+    """reset-password end-to-end: real DB lookup and new hash stored."""
+    await client.post("/api/users/", json=test_user_data)
+    token = create_password_reset_token(test_user_data["email"])
+    resp = await client.post(
+        "/api/auth/reset-password",
+        json={
+            "token": token,
+            "new_password": "brand-new-pwd-123",
+            "confirm_password": "brand-new-pwd-123",
+        },
+    )
+    assert resp.status_code == codes.OK
+    assert "redefinida com sucesso" in resp.json()["message"]

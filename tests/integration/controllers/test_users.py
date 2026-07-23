@@ -126,3 +126,43 @@ async def test_read_user_not_found_admin_route(
     random_id = uuid.uuid4()
     response = await client.get(f"{users_url}{random_id}", headers=headers)
     assert response.status_code == codes.NOT_FOUND
+
+
+async def test_create_user_triggers_welcome_email(
+    client: AsyncClient, test_user_data: dict
+):
+    """POST /users should schedule the welcome email as a background task."""
+    from src.main import app
+    from src.services.emails import EmailService
+
+    mock_email_service = app.dependency_overrides[EmailService]()
+    mock_email_service.send_welcome_email.reset_mock()
+
+    resp = await client.post(users_url, json=test_user_data)
+    assert resp.status_code == codes.CREATED
+    assert mock_email_service.send_welcome_email.called
+
+
+async def test_delete_user_me_is_no_content(
+    client: AsyncClient, access_token: str
+):
+    """DELETE /users/me should return 204 and remove the user."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    resp = await client.delete(f"{users_url}me/", headers=headers)
+    assert resp.status_code == codes.NO_CONTENT
+
+    # Subsequent /me should now be 401 (user no longer exists)
+    resp2 = await client.get(f"{users_url}me/", headers=headers)
+    assert resp2.status_code == codes.UNAUTHORIZED
+
+
+async def test_update_user_me_changes_name_only(
+    client: AsyncClient, access_token: str
+):
+    """Patching only the name should keep income unchanged."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    resp = await client.patch(
+        f"{users_url}me/", json={"name": "Just Renamed"}, headers=headers
+    )
+    assert resp.status_code == codes.OK
+    assert resp.json()["name"] == "Just Renamed"
