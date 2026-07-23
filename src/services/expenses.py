@@ -75,7 +75,8 @@ class ExpenseService:
             select(Expense)
             .where(col(Expense.user_id) == user_id)
             .options(
-                selectinload(Expense.categories), selectinload(Expense.period)
+                selectinload(Expense.categories),  # type: ignore[arg-type]
+                selectinload(Expense.period),  # type: ignore[arg-type]
             )
         )
 
@@ -90,7 +91,7 @@ class ExpenseService:
 
         if category_ids:
             statement = statement.where(
-                Expense.categories.any(Category.id.in_(category_ids))
+                Expense.categories.any(Category.id.in_(category_ids))  # type: ignore[attr-defined]
             )
 
         statement = (
@@ -109,7 +110,8 @@ class ExpenseService:
                 col(Expense.id) == expense_id, col(Expense.user_id) == user_id
             )
             .options(
-                selectinload(Expense.categories), selectinload(Expense.period)
+                selectinload(Expense.categories),  # type: ignore[arg-type]
+                selectinload(Expense.period),  # type: ignore[arg-type]
             )
         )
         result = await self.session.exec(statement)
@@ -128,11 +130,13 @@ class ExpenseService:
     ) -> Expense:
         """Update an expense."""
         expense = await self.read(expense_id, user_id)
-        
-        if expense.status == ExpenseEnum.PAID and expense_update.status == ExpenseEnum.PAID:
+
+        if (
+            expense.status == ExpenseEnum.PAID
+            and expense_update.status == ExpenseEnum.PAID
+        ):
             raise HTTPException(
-                status_code=400,
-                detail="A despesa já está paga"
+                status_code=400, detail="A despesa já está paga"
             )
 
         data = expense_update.model_dump(

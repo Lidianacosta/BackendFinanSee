@@ -10,6 +10,7 @@ from fastapi_mail import (
     MessageSchema,
     MessageType,
 )
+from pydantic import SecretStr
 
 from src.core.config import settings
 
@@ -21,7 +22,7 @@ class EmailService:
         """Initialize the email service with SMTP configuration."""
         self.config = ConnectionConfig(
             MAIL_USERNAME=settings.mail_username,
-            MAIL_PASSWORD=settings.mail_password,
+            MAIL_PASSWORD=SecretStr(settings.mail_password),
             MAIL_FROM=settings.mail_from,
             MAIL_PORT=settings.mail_port,
             MAIL_SERVER=settings.mail_server,
@@ -43,7 +44,7 @@ class EmailService:
         """Send a welcome email to a newly registered user."""
         message = MessageSchema(
             subject=f"Bem-vindo ao {self.site_name}!",
-            recipients=[email],
+            recipients=[email],  # type: ignore[list-item]
             template_body={"name": name, "site_name": self.site_name},
             subtype=MessageType.html,
         )
@@ -58,7 +59,7 @@ class EmailService:
         """Send an email with instructions and token for password reset."""
         message = MessageSchema(
             subject=f"Recuperação de Senha - {self.site_name}",
-            recipients=[email],
+            recipients=[email],  # type: ignore[list-item]
             template_body={"token": token, "site_name": self.site_name},
             subtype=MessageType.html,
         )

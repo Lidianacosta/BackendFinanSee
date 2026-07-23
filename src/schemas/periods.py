@@ -97,6 +97,9 @@ class ExpenseAnalysis(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-from src.schemas.categories import CategoryRead
+# Resolve forward reference to CategoryRead without an end-of-file
+# import (would trigger ruff E402). Pydantic rebuild uses the imported
+# symbol available at runtime via src.schemas.categories below.
+from src.schemas.categories import CategoryRead  # noqa: E402 F811
 
 ExpenseAnalysis.model_rebuild()

@@ -50,7 +50,7 @@ class CategoryService:
         statement = (
             select(Category)
             .where(col(Category.user_id) == user_id)
-            .options(selectinload(Category.expenses))
+            .options(selectinload(Category.expenses))  # type: ignore[arg-type]
         )
         result = await self.session.exec(statement)
         return list(result.all())
@@ -65,7 +65,7 @@ class CategoryService:
                 col(Category.id) == category_id,
                 col(Category.user_id) == user_id,
             )
-            .options(selectinload(Category.expenses))
+            .options(selectinload(Category.expenses))  # type: ignore[arg-type]
         )
         result = await self.session.exec(statement)
         category = result.first()
@@ -110,13 +110,15 @@ class CategoryService:
     async def delete(self, category_id: uuid.UUID, user_id: uuid.UUID) -> None:
         """Delete a category for the authenticated user."""
         category = await self.read(category_id, user_id)
-        
+
         if category.expenses:
             raise HTTPException(
                 status_code=400,
-                detail="Não é possível deletar uma categoria que possui despesas"
+                detail=(
+                    "Não é possível deletar uma categoria que possui despesas"
+                ),
             )
-            
+
         await self.session.delete(category)
         await self.session.commit()
 

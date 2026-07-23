@@ -64,7 +64,7 @@ class UserService:
             current_period = await self.period_service.get_or_create_by_date(
                 user.id, date.today()
             )
-            current_period.total_income = new_income
+            current_period.total_income = new_income  # type: ignore[assignment]
             self.session.add(current_period)
 
         await self.session.commit()

@@ -55,7 +55,7 @@ class ReportService:
         statement = (
             select(Expense)
             .where(col(Expense.period_id) == period_id)
-            .options(selectinload(Expense.categories))
+            .options(selectinload(Expense.categories))  # type: ignore[arg-type]
             .order_by(col(Expense.due_date))
         )
         result = await self.session.exec(statement)

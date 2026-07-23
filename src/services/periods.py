@@ -4,11 +4,13 @@ Provides logic for managing monthly periods, calculating summaries,
 and generating financial analytics like evolution and expense analysis.
 """
 
+from __future__ import annotations
+
 import uuid
 from calendar import monthrange
 from datetime import date
 from decimal import Decimal
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import selectinload
@@ -28,6 +30,9 @@ from src.schemas.periods import (
     PeriodSummary,
 )
 from src.utils.database import AsyncSessionDep
+
+if TYPE_CHECKING:
+    from src.schemas.categories import CategoryRead
 
 
 class PeriodService:
@@ -198,7 +203,7 @@ class PeriodService:
         statement = (
             select(Expense)
             .where(col(Expense.period_id) == period_id)
-            .options(selectinload(Expense.categories))
+            .options(selectinload(Expense.categories))  # type: ignore[arg-type]
         )
         result = await self.session.exec(statement)
         expenses = list(result.all())
@@ -207,14 +212,14 @@ class PeriodService:
             (e.value or Decimal("0.0") for e in expenses), Decimal("0.0")
         )
 
-        category_counts = {}
+        category_counts: dict[uuid.UUID, int] = {}
         for exp in expenses:
             for cat in exp.categories:
                 category_counts[cat.id] = category_counts.get(cat.id, 0) + 1
 
-        top_category = {}
+        top_category: CategoryRead | dict = {}
         if category_counts:
-            top_cat_id = max(category_counts, key=category_counts.get)
+            top_cat_id = max(category_counts, key=category_counts.get)  # type: ignore[arg-type]
             top_cat_obj = await self.session.get(Category, top_cat_id)
             if top_cat_obj:
                 from src.schemas.categories import CategoryRead
