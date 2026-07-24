@@ -129,9 +129,7 @@ async def test_authenticate_user_not_found():
     user_service = AsyncMock(spec=UserService)
     user_service.get_user_by_email = AsyncMock(return_value=None)
 
-    res = await authenticate_user(
-        "nobody@test.com", "anything", user_service
-    )
+    res = await authenticate_user("nobody@test.com", "anything", user_service)
     assert res is None
 
 

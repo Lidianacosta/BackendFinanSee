@@ -55,9 +55,7 @@ async def test_update_me_without_income_change_keeps_periods_untouched(db):
     ps = PeriodService(db)
     us = UserService(db, ps)
 
-    updated = await us.update_me(
-        user, UserUpdate(name="Novo Nome")
-    )
+    updated = await us.update_me(user, UserUpdate(name="Novo Nome"))
     assert updated.name == "Novo Nome"
     # Should not have created a period for current month automatically
     periods = await ps.read_all(user.id)

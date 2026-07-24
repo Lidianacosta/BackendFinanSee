@@ -27,9 +27,7 @@ async def test_update_category_name_to_existing_fails(db):
     cat2 = await cs.create(CategoryCreate(name="Lazer"), uid)
 
     with pytest.raises(HTTPException) as exc:
-        await cs.update(
-            cat2.id, CategoryUpdate(name="Alimentação"), uid
-        )
+        await cs.update(cat2.id, CategoryUpdate(name="Alimentação"), uid)
     assert exc.value.status_code == 400
 
 
