@@ -2,7 +2,6 @@ name: CI
 
 # TODO: Adicionar testcontainers[postgres] para testes de integração
 
-
 on:
   push:
     branches: [ main ]
@@ -12,7 +11,7 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-22.04
-    
+
     env:
       SECRET_KEY: ${{ secrets.CI_SECRET_KEY || 'ci-secret-key-not-used-in-real-life-32-bytes-long!!' }}
       ALGORITHM: HS256
@@ -54,3 +53,30 @@ jobs:
       - name: Run tests
         run: uv run pytest -vvv
 
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Lint with ruff
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
