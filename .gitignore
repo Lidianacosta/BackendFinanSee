@@ -26,3 +26,4 @@ test.db
 # coverage
 .coverage
 coverage_html
+coverage.xml
