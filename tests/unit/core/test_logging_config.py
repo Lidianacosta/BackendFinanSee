@@ -13,8 +13,13 @@ def test_request_id_filter_assigns_when_missing():
     f = RequestIdFilter()
     f.request_id = "abc-123"
     record = logging.LogRecord(
-        name="x", level=logging.INFO, pathname="", lineno=1,
-        msg="hello", args=(), exc_info=None,
+        name="x",
+        level=logging.INFO,
+        pathname="",
+        lineno=1,
+        msg="hello",
+        args=(),
+        exc_info=None,
     )
     assert not hasattr(record, "request_id")
     assert f.filter(record) is True
@@ -26,8 +31,13 @@ def test_request_id_filter_preserves_existing_value():
     f = RequestIdFilter()
     f.request_id = "new"
     record = logging.LogRecord(
-        name="x", level=logging.INFO, pathname="", lineno=1,
-        msg="hello", args=(), exc_info=None,
+        name="x",
+        level=logging.INFO,
+        pathname="",
+        lineno=1,
+        msg="hello",
+        args=(),
+        exc_info=None,
     )
     record.request_id = "existing"
     f.filter(record)
