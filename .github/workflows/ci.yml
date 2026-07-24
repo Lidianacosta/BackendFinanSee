@@ -18,10 +18,10 @@ jobs:
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
       REFRESH_TOKEN_EXPIRE_MINUTES: 10080
-      MAIL_USERNAME: ci@finansee.test
+      MAIL_USERNAME: ci@example.com
       MAIL_PASSWORD: ""
       MAIL_SERVER: localhost
-      MAIL_FROM: ci@finansee.test
+      MAIL_FROM: ci@example.com
       MAIL_FROM_NAME: FinanSee CI
       MAIL_PORT: 1025
       MAIL_STARTTLS: "false"
