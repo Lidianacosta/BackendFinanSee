@@ -28,7 +28,6 @@ class Settings(BaseSettings):
     mail_ssl_tls: bool = Field(default=False)
     use_credentials: bool = Field(default=True)
 
-    # CORS
     cors_origins: list[str] = Field(
         default_factory=lambda: ["http://localhost:3000"]
     )
@@ -49,7 +48,7 @@ class Settings(BaseSettings):
                 )
         return self
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()
