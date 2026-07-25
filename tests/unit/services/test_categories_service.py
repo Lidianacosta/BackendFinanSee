@@ -13,8 +13,11 @@ from src.services.categories import CategoryService
 async def test_read_category_not_found(db):
     """read() raises 404 when category does not exist."""
     cs = CategoryService(db)
+    category_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+
     with pytest.raises(HTTPException) as exc:
-        await cs.read(uuid.uuid4(), uuid.uuid4())
+        await cs.read(category_id, user_id)
     assert exc.value.status_code == 404
 
 
@@ -25,9 +28,10 @@ async def test_update_category_name_to_existing_fails(db):
     cs = CategoryService(db)
     await cs.create(CategoryCreate(name="Alimentação"), uid)
     cat2 = await cs.create(CategoryCreate(name="Lazer"), uid)
+    update_data = CategoryUpdate(name="Alimentação")
 
     with pytest.raises(HTTPException) as exc:
-        await cs.update(cat2.id, CategoryUpdate(name="Alimentação"), uid)
+        await cs.update(cat2.id, update_data, uid)
     assert exc.value.status_code == 400
 
 

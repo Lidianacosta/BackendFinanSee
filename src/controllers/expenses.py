@@ -32,10 +32,12 @@ async def create_expense(
 async def read_expenses(
     service: ExpenseServiceDep,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    period_id: uuid.UUID | None = Query(None),
-    search: str | None = Query(None),
-    category_ids: list[uuid.UUID] | None = Query(None),
-    expense_status: ExpenseEnum | None = Query(None, alias="status"),
+    period_id: Annotated[uuid.UUID | None, Query()] = None,
+    search: Annotated[str | None, Query()] = None,
+    category_ids: Annotated[list[uuid.UUID] | None, Query()] = None,
+    expense_status: Annotated[
+        ExpenseEnum | None, Query(alias="status")
+    ] = None,
     offset: int = 0,
     limit: int = 100,
 ):

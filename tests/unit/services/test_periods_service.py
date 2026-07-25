@@ -18,8 +18,11 @@ from src.services.periods import PeriodService
 async def test_read_period_not_found(db):
     """read() raises 404 for unknown period_id."""
     ps = PeriodService(db)
+    period_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+
     with pytest.raises(HTTPException) as exc:
-        await ps.read(uuid.uuid4(), uuid.uuid4())
+        await ps.read(period_id, user_id)
     assert exc.value.status_code == 404
 
 
@@ -123,8 +126,11 @@ async def test_get_summary_mixed_paid_pending_expenses(db):
 async def test_get_summary_period_not_found(db):
     """get_summary should propagate the 404 from read()."""
     ps = PeriodService(db)
+    period_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+
     with pytest.raises(HTTPException) as exc:
-        await ps.get_summary(uuid.uuid4(), uuid.uuid4())
+        await ps.get_summary(period_id, user_id)
     assert exc.value.status_code == 404
 
 
@@ -155,8 +161,11 @@ async def test_financial_evolution_with_periods_in_adjacent_months(db):
 async def test_financial_evolution_period_not_found(db):
     """Evolution should 404 when the period does not exist."""
     ps = PeriodService(db)
+    period_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+
     with pytest.raises(HTTPException) as exc:
-        await ps.get_financial_evolution(uuid.uuid4(), uuid.uuid4())
+        await ps.get_financial_evolution(period_id, user_id)
     assert exc.value.status_code == 404
 
 
@@ -201,6 +210,9 @@ async def test_expense_analysis_with_top_category_tie(db):
 async def test_expense_analysis_period_not_found(db):
     """analysis should 404 when the period does not exist."""
     ps = PeriodService(db)
+    period_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+
     with pytest.raises(HTTPException) as exc:
-        await ps.get_expense_analysis(uuid.uuid4(), uuid.uuid4())
+        await ps.get_expense_analysis(period_id, user_id)
     assert exc.value.status_code == 404

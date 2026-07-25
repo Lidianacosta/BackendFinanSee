@@ -62,7 +62,7 @@ async def login_for_access_token(
     )
 
 
-@router.post("/refresh", response_model=TokenPair)
+@router.post("/refresh")
 async def refresh_access_token(
     data: RefreshIn,
     user_service: UserServiceDep,

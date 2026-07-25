@@ -34,15 +34,15 @@ async def test_create_user_duplicate_email_fails(db):
 
     us = UserService(db, PeriodService(db))
 
+    user_data = UserCreate(
+        name="Other",
+        email=ps.email or "",
+        password="password123",
+        confirm_password="password123",
+    )
+
     with pytest.raises(HTTPException) as exc:
-        await us.create(
-            UserCreate(
-                name="Other",
-                email=ps.email or "",
-                password="password123",
-                confirm_password="password123",
-            )
-        )
+        await us.create(user_data)
     assert exc.value.status_code == 400
 
 
