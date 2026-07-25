@@ -5,7 +5,7 @@ from datetime import date
 from typing import Annotated
 
 from fastapi import Depends
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 from weasyprint import HTML
@@ -25,7 +25,10 @@ class ReportService:
         """Initialize ReportService with dependencies."""
         self.session = session
         self.period_service = period_service
-        self.jinja_env = Environment(loader=FileSystemLoader("src/templates"))
+        self.jinja_env = Environment(
+            loader=FileSystemLoader("src/templates"),
+            autoescape=select_autoescape(["html", "xml"]),
+        )
 
     def _get_month_name(self, month: date) -> str:
         """Translate month number to Portuguese name."""

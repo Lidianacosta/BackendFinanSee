@@ -81,9 +81,10 @@ async def test_generate_pdf_period_not_found(db):
     user = await _make_user(db, email="nf@u.com")
     ps = PeriodService(db)
     rs = ReportService(db, ps)
+    missing_period_id = uuid.uuid4()
 
     with pytest.raises(HTTPException) as exc:
-        await rs.generate_period_pdf(uuid.uuid4(), user)
+        await rs.generate_period_pdf(missing_period_id, user)
     assert exc.value.status_code == 404
 
 

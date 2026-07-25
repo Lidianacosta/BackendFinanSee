@@ -105,6 +105,8 @@ async def export_period_pdf(
         content=pdf_content,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": f"attachment; filename=report_{period_id}.pdf"
+            "Content-Disposition": (
+                f"attachment; filename=report_{period_id}.pdf"
+            )
         },
     )

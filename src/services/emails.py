@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import BackgroundTasks, Depends
+from fastapi import Depends
 from fastapi_mail import (
     ConnectionConfig,
     FastMail,
@@ -38,9 +38,7 @@ class EmailService:
 
         self.site_name = "FinanSee"
 
-    async def send_welcome_email(
-        self, email: str, name: str, background_tasks: BackgroundTasks
-    ) -> None:
+    async def send_welcome_email(self, email: str, name: str) -> None:
         """Send a welcome email to a newly registered user."""
         message = MessageSchema(
             subject=f"Bem-vindo ao {self.site_name}!",
@@ -49,13 +47,9 @@ class EmailService:
             subtype=MessageType.html,
         )
         fm = FastMail(self.config)
-        background_tasks.add_task(
-            fm.send_message, message, template_name="welcome.html"
-        )
+        await fm.send_message(message, template_name="welcome.html")
 
-    async def send_password_reset_email(
-        self, email: str, token: str, background_tasks: BackgroundTasks
-    ) -> None:
+    async def send_password_reset_email(self, email: str, token: str) -> None:
         """Send an email with instructions and token for password reset."""
         message = MessageSchema(
             subject=f"Recuperação de Senha - {self.site_name}",
@@ -64,9 +58,7 @@ class EmailService:
             subtype=MessageType.html,
         )
         fm = FastMail(self.config)
-        background_tasks.add_task(
-            fm.send_message, message, template_name="password_reset.html"
-        )
+        await fm.send_message(message, template_name="password_reset.html")
 
 
 EmailServiceDep = Annotated[EmailService, Depends(EmailService)]

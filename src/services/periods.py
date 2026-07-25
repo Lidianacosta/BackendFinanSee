@@ -10,7 +10,7 @@ import uuid
 from calendar import monthrange
 from datetime import date
 from decimal import Decimal
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import selectinload
@@ -20,6 +20,7 @@ from src.models.categories import Category
 from src.models.expenses import Expense, ExpenseEnum
 from src.models.periods import Period
 from src.models.users import User
+from src.schemas.categories import CategoryRead
 from src.schemas.periods import (
     DailyEvolutionEntry,
     ExpenseAnalysis,
@@ -30,9 +31,6 @@ from src.schemas.periods import (
     PeriodSummary,
 )
 from src.utils.database import AsyncSessionDep
-
-if TYPE_CHECKING:
-    from src.schemas.categories import CategoryRead
 
 
 class PeriodService:
@@ -222,8 +220,6 @@ class PeriodService:
             top_cat_id = max(category_counts, key=category_counts.get)  # type: ignore[arg-type]
             top_cat_obj = await self.session.get(Category, top_cat_id)
             if top_cat_obj:
-                from src.schemas.categories import CategoryRead
-
                 top_category = CategoryRead.model_validate(top_cat_obj)
 
         _, last_day = monthrange(period.month.year, period.month.month)

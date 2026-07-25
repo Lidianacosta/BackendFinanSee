@@ -69,8 +69,10 @@ async def test_cannot_pay_already_paid_expense(db):
         ps,
     )
 
+    update_data = ExpenseUpdate(status=ExpenseEnum.PAID)
+
     with pytest.raises(HTTPException) as exc:
-        await es.update(exp.id, ExpenseUpdate(status=ExpenseEnum.PAID), uid)
+        await es.update(exp.id, update_data, uid)
 
     assert exc.value.status_code == 400
     assert "A despesa já está paga" in exc.value.detail
@@ -86,13 +88,12 @@ async def test_cannot_create_duplicate_period(db):
         PeriodCreate(month=date(2023, 1, 1), total_income=Decimal("1000")), uid
     )
 
+    duplicate_period = PeriodCreate(
+        month=date(2023, 1, 15), total_income=Decimal("2000")
+    )
+
     with pytest.raises(HTTPException) as exc:
-        await ps.create(
-            PeriodCreate(
-                month=date(2023, 1, 15), total_income=Decimal("2000")
-            ),
-            uid,
-        )
+        await ps.create(duplicate_period, uid)
 
     assert exc.value.status_code == 400
     assert "Já existe um período para este mês" in exc.value.detail

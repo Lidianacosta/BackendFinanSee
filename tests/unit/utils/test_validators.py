@@ -41,17 +41,17 @@ def test_schemas_validators():
     with pytest.raises(ValueError):
         CategoryUpdate(description="🚀")
 
+    today = date.today()
+
     with pytest.raises(ValueError):
-        ExpenseBase(name="!", value=10, due_date=date.today())
+        ExpenseBase(name="!", value=10, due_date=today)
     with pytest.raises(ValueError):
-        ExpenseBase(
-            name="Valid", value=10, due_date=date.today(), description="🚀"
-        )
+        ExpenseBase(name="Valid", value=10, due_date=today, description="🚀")
     with pytest.raises(ValueError):
         ExpenseUpdate(name="!")
 
     with pytest.raises(ValueError):
-        UserBase(name="Test", email="t@t.com", date_of_birth=date.today())
+        UserBase(name="Test", email="t@t.com", date_of_birth=today)
     with pytest.raises(ValueError):
         UserBase(name="Test", email="t@t.com", phone_number="!")
     with pytest.raises(ValueError):
