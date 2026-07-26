@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-22.04
 
     env:
+      PATH: ${{ github.workspace }}/.venv/bin:${{ env.PATH }}
+      VIRTUAL_ENV: ${{ github.workspace }}/.venv
       SECRET_KEY: ${{ secrets.CI_SECRET_KEY || 'ci-secret-key-not-used-in-real-life-32-bytes-long!!' }}
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
@@ -44,13 +46,10 @@ jobs:
       - name: Install dependencies (hashed, locked)
         run: |
           python -m venv .venv
-          source .venv/bin/activate
           python -m pip install --require-hashes -r requirements.txt
 
       - name: Run tests with coverage
-        run: |
-          source .venv/bin/activate
-          pytest --cov=src --cov-report=xml --cov-report=term
+        run: pytest --cov=src --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238
@@ -61,6 +60,10 @@ jobs:
 
   lint:
     runs-on: ubuntu-22.04
+
+    env:
+      PATH: ${{ github.workspace }}/.venv/bin:${{ env.PATH }}
+      VIRTUAL_ENV: ${{ github.workspace }}/.venv
 
     steps:
       - name: Checkout code
@@ -77,11 +80,9 @@ jobs:
       - name: Install dependencies (hashed, locked)
         run: |
           python -m venv .venv
-          source .venv/bin/activate
           python -m pip install --require-hashes -r requirements.txt
 
       - name: Lint with ruff
         run: |
-          source .venv/bin/activate
           ruff check .
           ruff format --check .
