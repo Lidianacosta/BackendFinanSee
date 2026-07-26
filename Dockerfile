@@ -15,7 +15,8 @@ RUN apt-get update && \
 
 COPY pyproject.toml uv.lock ./
 
-RUN uv sync --frozen --no-install-project --no-dev
+# RUN uv sync --frozen --no-install-project --no-dev
+RUN uv sync --frozen --no-build --no-install-project --no-dev --no-binary-package psycopg2
 
 
 FROM python:3.12-slim AS base

@@ -48,7 +48,7 @@ jobs:
           key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
 
       - name: Install dependencies
-        run: uv sync --frozen --no-build
+        run: uv sync --frozen --no-build --no-binary-package psycopg2
 
       - name: Run tests with coverage
         run: uv run pytest --cov=src --cov-report=xml --cov-report=term
@@ -81,7 +81,7 @@ jobs:
           key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
 
       - name: Install dependencies
-        run: uv sync --frozen --no-build
+        run: uv sync --frozen --no-build --no-binary-package psycopg2
 
       - name: Lint with ruff
         run: |
