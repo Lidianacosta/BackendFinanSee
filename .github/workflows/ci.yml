@@ -42,10 +42,15 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends build-essential libpq-dev
 
       - name: Install dependencies (hashed, locked)
-        run: python -m pip install --require-hashes -r requirements.txt
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          python -m pip install --require-hashes -r requirements.txt
 
       - name: Run tests with coverage
-        run: pytest --cov=src --cov-report=xml --cov-report=term
+        run: |
+          source .venv/bin/activate
+          pytest --cov=src --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238
@@ -70,9 +75,13 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends build-essential libpq-dev
 
       - name: Install dependencies (hashed, locked)
-        run: python -m pip install --require-hashes -r requirements.txt
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          python -m pip install --require-hashes -r requirements.txt
 
       - name: Lint with ruff
         run: |
+          source .venv/bin/activate
           ruff check .
           ruff format --check .
