@@ -29,7 +29,6 @@ RUN apt-get update && \
   libcairo2 \
   libgdk-pixbuf-2.0-0 \
   libglib2.0-0 \
-  libgobject-2.0-0 \
   libharfbuzz0b \
   libpango-1.0-0 \
   libpangoft2-1.0-0 \

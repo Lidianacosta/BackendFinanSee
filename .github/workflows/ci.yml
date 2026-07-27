@@ -99,7 +99,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends build-essential libpq-dev
 
       - name: Install WeasyPrint system deps
-        run: sudo apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 libcairo2 libgdk-pixbuf-2.0-0 libglib2.0-0 libgobject-2.0-0 libharfbuzz0b shared-mime-info fonts-dejavu-core
+        run: sudo apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 libcairo2 libgdk-pixbuf-2.0-0 libglib2.0-0 libharfbuzz0b shared-mime-info fonts-dejavu-core
 
       - name: Sync dependencies from uv.lock (frozen, no-build)
         run: uv sync --frozen --no-build --all-extras --no-install-project
