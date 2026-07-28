@@ -1,39 +1,140 @@
 # FinanSee API
 
-Backend de controle financeiro pessoal, focado no mercado brasileiro:
-cadastro com validação de CPF/telefone/idade, categorias, despesas,
-períodos mensais, análises financeiras e exportação de relatórios em PDF.
+[![CI](https://img.shields.io/github/actions/workflow/status/Lidianacosta/BackendFinanSee/ci.yml?branch=main&label=CI&logo=github)](https://github.com/Lidianacosta/BackendFinanSee/actions/workflows/ci.yml)
+[![Codecov](https://img.shields.io/codecov/c/github/Lidianacosta/BackendFinanSee?logo=codecov&logoColor=white)](https://codecov.io/gh/Lidianacosta/BackendFinanSee)
+[![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-3776AB?logo=python&logoColor=white)](https://www.python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![License](https://img.shields.io/github/license/Lidianacosta/BackendFinanSee)](LICENSE)
+[![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)](https://github.com/Lidianacosta/BackendFinanSee/blob/main/Dockerfile)
+[![Quality Gate](https://img.shields.io/sonar/quality_gate/Lidianacosta_BackendFinanSee?server=https%3A%2F%2Fsonarcloud.io)](https://sonarcloud.io/dashboard?id=Lidianacosta_BackendFinanSee)
+
+> Backend de controle financeiro pessoal, focado no mercado brasileiro:
+> cadastro com validação de CPF/telefone/idade, categorias, despesas,
+> períodos mensais, análises financeiras e exportação de relatórios em PDF.
+
+## Índice
+
+- [Stack](#stack)
+- [Arquitetura](#arquitetura)
+- [Quick Start (Docker)](#quick-start-docker)
+- [Endpoints](#endpoints)
+- [Modelos de dados](#modelos-de-dados)
+- [Autenticação](#autenticação)
+- [Desenvolvimento](#desenvolvimento)
+- [Observabilidade](#observabilidade)
+
+## Arquitetura
+
+### Visão geral (C4 — Nível 2: Contêineres)
+
+```mermaid
+flowchart LR
+  Client[Cliente HTTP<br/>Swagger/Frontend]
+  subgraph App[FastAPI App]
+      MW[Middleware<br/>Request-ID + CORS]
+      Ctrl[Controllers<br/>Rotas REST]
+      Svc[Services<br/>Regras de Negócio]
+      Models[(SQLModel<br/>ORM)]
+      Mail[EmailService<br/>Jinja2 + SMTP]
+      PDF[ReportService<br/>WeasyPrint]
+  end
+  DB[(PostgreSQL 16<br/>Alembic migrations)]
+  Redis[(Redis 7<br/>Cache opcional)]
+  SMTP[MailHog<br/>SMTP dev]
+
+  Client -->|JWT Bearer| MW
+  MW --> Ctrl
+  Ctrl --> Svc
+  Svc --> Models
+  Models --> DB
+  Svc -.cache.-> Redis
+  Svc --> Mail --> SMTP
+  Svc --> PDF
+```
+
+### Fluxo de autenticação (sequência)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as Usuário
+    participant API as FastAPI
+    participant DB as PostgreSQL
+    participant JWT as PyJWT
+
+    U->>API: POST /auth/token (email + senha)
+    API->>DB: SELECT user WHERE email=?
+    DB-->>API: user (hashed_password)
+    API->>API: Argon2.verify(password, hash)
+    API->>JWT: encode({sub, type:access}, 30min)
+    API->>JWT: encode({sub, type:refresh}, 7d)
+    JWT-->>API: access_token + refresh_token
+    API-->>U: 200 {access_token, refresh_token, type:bearer}
+    Note over U,API: Requests seguintes: Authorization: Bearer <access>
+    alt access expirado
+        U->>API: POST /auth/refresh (refresh_token)
+        API->>JWT: decode + type=refresh
+        API-->>U: novo access_token
+    end
+```
 
 ## Stack
 
-- **FastAPI** async + **SQLModel/SQLAlchemy** + **aiosqlite**
-- **pwdlib (Argon2)** para hashing de senha, **PyJWT** para auth
+- **FastAPI** 0.136 (async) + **SQLModel**/**SQLAlchemy** + **asyncpg** (Postgres) / **aiosqlite** (fallback de testes)
+- **pwdlib (Argon2)** para hashing de senha, **PyJWT** para access/refresh tokens
 - **fastapi-mail** + **Jinja2** para emails transacionais
 - **WeasyPrint** para relatórios em PDF
-- **Alembic** para migrations de schema
+- **Alembic** para migrations de schema (async)
+- **Pydantic v2** (`pydantic-settings`) para configuração via `.env`
+- **Redis 7** disponível via `docker-compose` para cache futuro
+- **MailHog** para captura de emails em desenvolvimento
 
 ## Requisitos
 
-- Python 3.12+
-- [uv](https://docs.astral.sh/uv/) como gerenciador de pacotes
-- WeasyPrint depende de bibliotecas do sistema
-  (no Ubuntu: `libpango libcairo libgdk-pixbuf2.0-0`)
+- **Opção A (recomendada):** Docker + Docker Compose
+- **Opção B:** Python 3.12+ e [uv](https://docs.astral.sh/uv/)
+- WeasyPrint depende de libs do sistema no Ubuntu:
+  `libpango libcairo libgdk-pixbuf2.0-0`
 
-## Setup
+## Quick Start (Docker) 🐳
+
+Sobe **API + Postgres 16 + Redis 7 + MailHog + pgAdmin** com um comando:
+
+```bash
+# 1. Copiar e preencher variáveis
+cp .env.example .env
+# Edite .env com POSTGRES_PASSWORD e PGADMIN_DEFAULT_PASSWORD
+
+# 2. Subir a stack completa
+docker compose up -d
+
+# 3. Aplicar migrations
+docker compose exec app alembic upgrade head
+
+# 4. (Opcional) Seed inicial
+docker compose exec app python -m scripts.seed  # se existir
+```
+
+| Serviço | URL | Credenciais |
+|---|---|---|
+| API (Swagger) | http://localhost:8000/docs | - |
+| pgAdmin | http://localhost:8081 | Veja `.env` |
+| MailHog | http://localhost:8025 | sem auth |
+| Postgres | `localhost:5432` | Veja `.env` |
+| Redis | `localhost:6379` | sem auth |
+
+### Setup local (sem Docker)
 
 ```bash
 # Instalar dependências
 uv sync
 
-# Copiar variáveis de ambiente e preencher
-cp .env.example .env
-# Edite .env com SECRET_KEY e MAIL_PASSWORD
-
-# Aplicar migrations ao banco
+# Aplicar migrations ao SQLite local
 uv run alembic upgrade head
 
 # Rodar em desenvolvimento
 uv run fastapi dev src/main.py
+# ou: uv run uvicorn src.main:app --reload
 ```
 
 ## Variáveis de ambiente

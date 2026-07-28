@@ -100,8 +100,10 @@ async def forgot_password(
     user = await user_service.get_user_by_email(data.email)
     if user:
         token = create_password_reset_token(user.email or "")
-        await email_service.send_password_reset_email(
-            user.email or "", token, background_tasks
+        background_tasks.add_task(
+            email_service.send_password_reset_email,
+            user.email or "",
+            token,
         )
 
     return {"message": "Se o e-mail existir, as instruções foram enviadas"}

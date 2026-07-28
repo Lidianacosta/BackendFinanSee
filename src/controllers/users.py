@@ -22,8 +22,8 @@ async def create_user(
 ):
     """Create a new user."""
     user = await service.create(user_data)
-    await email_service.send_welcome_email(
-        user.email or "", user.name or "", background_tasks
+    background_tasks.add_task(
+        email_service.send_welcome_email, user.email or "", user.name or ""
     )
     return user
 
